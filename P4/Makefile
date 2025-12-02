@@ -3,18 +3,21 @@ CFLAGS= -std=c99 -D_POSIX_C_SOURCE=200809L -Wall -fsanitize=address,undefined -I
 
 BUILD_FOLDER = builds
 
-MYSH = mysh.c
+NIMD = nimd.c
+NETWORK = clients/src/network.h # remove later
+PBUF = clients/src/pbuf.h # remove later
 
 # # gets all tests (exclude helper.c since it's included by testingInterface.c)
 TESTS := $(filter-out tests/helper.c, $(wildcard tests/*.c))
 
 TEST_OUTPUTS := $(patsubst tests/%.c, $(BUILD_FOLDER)/%, $(TESTS))
 
-all: mysh.o ${TEST_OUTPUTS}
+all: nimd
+# ${TEST_OUTPUTS}
 
-mysh.o: mysh.c
+nimd: nimd.c $(NETWORK) $(PBUF) nimd.h clients/src/network.c helper.c
 	@mkdir -p $(BUILD_FOLDER)
-	$(CC) $(CFLAGS) mysh.c -o mysh
+	$(CC) $(CFLAGS) nimd.c clients/src/network.c helper.c -o nimd
 
 # recipe to build each test output
 $(BUILD_FOLDER)/%: tests/%.c
@@ -30,6 +33,6 @@ runTest: all
 runAllTests: all
 	@./$(BUILD_FOLDER)/runTests
 
-# remove mysh.o and all built test outputs
+# remove nimd.o and all built test outputs
 clean:
-	rm -f -rf $(BUILD_FOLDER)/* mysh.o
+	rm -f -rf $(BUILD_FOLDER)/* nimd
