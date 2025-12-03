@@ -34,8 +34,8 @@ typedef struct {
 
 // from helper.c
 void close_client_sockets(client clients[], int num_clients);
-int countWaitingPlayers(client clients[], int num_clients);
-int hasAvailablePlayer(client clients[], int num_clients);
+int num_waiting_players(client clients[], int num_clients);
+// int has_available_player(client clients[], int num_clients);
 void print_parsed_msg(char* msg[], int count);
 void send_fail_msg(int socket_fd, char* reason);
 int send_play_msg(int socket_fd, int pile, int stones);

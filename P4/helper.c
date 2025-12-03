@@ -80,7 +80,7 @@ void print_parsed_msg(char *msg[], int count)
 }
 
 // helper function to just check if a player is available
-int hasAvailablePlayer(client clients[], int num_clients)
+int has_available_player(client clients[], int num_clients)
 {
     for (int i = 0; i < num_clients; i++)
     {
@@ -93,7 +93,7 @@ int hasAvailablePlayer(client clients[], int num_clients)
 }
 
 // helper function to count waiting players
-int countWaitingPlayers(client clients[], int num_clients)
+int num_waiting_players(client clients[], int num_clients)
 {
     int count = 0;
     for (int i = 0; i < num_clients; i++)

@@ -109,7 +109,7 @@ void parse_msg(char buf[], char *msg[], char token_storage[][256], int max_token
 }
 
 // function to find and start a game -> on success, return game id; on failure, return -1
-int findAndStartGame(client clients[], int num_clients, game_instance games[], int *num_games)
+int find_and_start_game(client clients[], int num_clients, game_instance games[], int *num_games)
 {
     int player1_index = -1;
     int player2_index = -1;
@@ -265,9 +265,9 @@ int main(int argc, char **argv)
         // fprintf(stdout, "Added client: socket %d, name %s, state %d\n",
         //         new_client.socket_fd, new_client.name, new_client.state); // debug print
         // check if we can start a game
-        if (countWaitingPlayers(clients, num_clients) >= 2)
+        if (num_waiting_players(clients, num_clients) >= 2)
         {
-            int game_id = findAndStartGame(clients, num_clients, games, &num_games);
+            int game_id = find_and_start_game(clients, num_clients, games, &num_games);
             if (game_id != -1)
             {
                 // continue update here
