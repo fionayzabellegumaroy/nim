@@ -26,8 +26,8 @@ int num_games = 0;
 // function to check if message has any framing errors -> returns 0 if none; -1 if an error is found
 int check_framing_errors(char buf[], int received_length)
 {
-    // char valid_types[7] = {"OPEN", "WAIT", "NAME", "PLAY", "MOVE", "OVER", "FAIL"};
-    // char client_types[3] = {"OPEN", "MOVE", "FAIL"};
+    // check max message length
+    if (received_length > 104) return -1;
 
     // 1. check version
     if (buf[0] != '0' || buf[1] != '|')
@@ -150,7 +150,10 @@ int main(int argc, char **argv)
         // fprintf(stdout, "no framing errors for msg %s\n", buf); // debug print
 
         // if no framing errors, parse message
-        // if (parse_msg())
+        char temp[256];
+        if (parse_msg(strcpy(temp, buf)) != 0){
+
+        }
 
         // after a succeessful OPEN from client, server sends WAIT message
         // int wait_status = send_wait_msg(client_socket);

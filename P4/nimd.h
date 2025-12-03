@@ -31,10 +31,11 @@ typedef struct {
 } client;
 
 // from helper.c
-int validate_fields(char buf[], int check_length, char* type);
-int send_wait_msg(int socket_fd);
-int send_play_msg(int socket_fd, int pile, int stones);
 void send_fail_msg(int socket_fd, char* reason);
+int send_play_msg(int socket_fd, int pile, int stones);
+int send_wait_msg(int socket_fd);
+int validate_fields(char buf[], int check_length, char* type);
+
 
 // might need to remove this before submission
 
