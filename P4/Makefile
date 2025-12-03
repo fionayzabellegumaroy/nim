@@ -8,18 +8,19 @@ NETWORK = clients/src/network.h # remove later
 PBUF = clients/src/pbuf.h # remove later
 CLIENTS = clients/src/
 
-# # gets all tests (exclude helper.c since it's included by testingInterface.c)
+# gets all tests (exclude helper.c since it's included by testingInterface.c)
 TESTS := $(filter-out tests/helper.c, $(wildcard tests/*.c))
 
 TEST_OUTPUTS := $(patsubst tests/%.c, $(BUILD_FOLDER)/%, $(TESTS))
 
-all: nimd rawc
+all: nimd rawc # remove rawc later
 # ${TEST_OUTPUTS}
 
 nimd: nimd.c $(NETWORK) $(PBUF) nimd.h clients/src/network.c helper.c
 	@mkdir -p $(BUILD_FOLDER)
 	$(CC) $(CFLAGS) nimd.c clients/src/network.c helper.c -o nimd
 
+# remove rawc later
 rawc: ${CLIENTS}rawc.o ${CLIENTS}pbuf.o ${CLIENTS}network.o
 	$(CC) $(CFLAGS) -o $@ $^
 
@@ -39,4 +40,4 @@ runAllTests: all
 
 # remove nimd.o and all built test outputs
 clean:
-	rm -f -rf $(BUILD_FOLDER)/* nimd
+	rm -f -rf $(BUILD_FOLDER)/* nimd rawc

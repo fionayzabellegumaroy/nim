@@ -30,12 +30,11 @@ typedef struct {
     int game_id; // this will probably only matter really when we have multiple games but still a good idea to have rn
 } client;
 
-
-#define MAX_CLIENTS 10 // arbitrary for now
-#define MAX_GAMES 5    // arbitrary for now
-
 // from helper.c
+int validate_fields(char buf[], int check_length, char* type);
+int send_wait_msg(int socket_fd);
 int send_play_msg(int socket_fd, int pile, int stones);
+void send_fail_msg(int socket_fd, char* reason);
 
 // might need to remove this before submission
 

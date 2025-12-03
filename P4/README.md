@@ -17,8 +17,11 @@ netID: fag46
 ### Design:
 1. Set up server that has one listening socket
 2. Each client gets their own socket FD (which will be trackd with client_info)
-3. Once a game starts, will utilize helper functions to send our messages and parse through the messages (i.e. int send_play_msg(int socket, int turn, int[] board) and int parse_move_msg(char *buffer, char *name) [ able to do char *name since names are unique, or we could also keep track giving a client struct idk])
-4. and so on? 
+3. Once there are 2 available clients in clients[], match them to a game
+4. Once a game starts, will utilize helper functions to send our messages and parse through the messages (i.e. int send_play_msg(int socket, int turn, int[] board) and int parse_move_msg(char *buffer, char *name) [ able to do char *name since names are unique, or we could also keep track giving a client struct idk])
+5. and so on? 
+
+thoughts: if we decide to work on multiple games, to decide who to match, we just grab the earliest waiting clients
 
 ### Game Flow:
 1. Client1 connects and sends: 0|16|OPEN|alice| (assuming "alice" is the name)
@@ -44,3 +47,8 @@ Process repeats
 ## Questions For Project:
 1. Do we delete clients folder before submission?
     If so, need to delete all references of it from nimd.h, Makefile, and maybe a few more
+2. If due to a presentation error that leads to closing a connection, does that mean it technically counts as a forfeit?
+3. If player sends OPEN more than once but during a play, we close both connections?
+4. Writeup says that client can send FAIL, but doesn't specify how server should handle it. We can maybe close the socket id OR we log that fail and then continue on.
+5. Where do we want to check if version is 0? I currently have it under framing errors
+6. Do we want to treat client giving server type messages as a framing error (rn i put it as is)
