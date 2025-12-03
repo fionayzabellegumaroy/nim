@@ -8,10 +8,10 @@ typedef struct {
 } message ;
 
 typedef enum {
-    CONNECTED,
-    WAITING,
-    PLAYING,
-    DISCONNECTED
+    CONNECTED, // 0
+    WAITING, // 1
+    PLAYING, // 2
+    DISCONNECTED // 3 might not need this if we automatically remove clients that are disconnected
 } client_state_t;
 
 typedef struct {
@@ -21,6 +21,8 @@ typedef struct {
     int current_player;     // 1 or 2
     int player1_socket;     
     int player2_socket;
+    int game_id;        
+    int current_turn; 
 } game_instance;
 
 typedef struct {
@@ -31,9 +33,13 @@ typedef struct {
 } client;
 
 // from helper.c
+void close_client_sockets(client clients[], int num_clients);
+int countWaitingPlayers(client clients[], int num_clients);
+int hasAvailablePlayer(client clients[], int num_clients);
+void print_parsed_msg(char* msg[], int count);
 void send_fail_msg(int socket_fd, char* reason);
 int send_play_msg(int socket_fd, int pile, int stones);
-int send_wait_msg(int socket_fd);
+void send_wait_msg(int socket_fd);
 int validate_fields(char buf[], int check_length, char* type);
 
 

@@ -27,7 +27,8 @@ int num_games = 0;
 int check_framing_errors(char buf[], int received_length)
 {
     // check max message length
-    if (received_length > 104) return -1;
+    if (received_length > 104)
+        return -1;
 
     // 1. check version
     if (buf[0] != '0' || buf[1] != '|')
@@ -70,7 +71,7 @@ int check_framing_errors(char buf[], int received_length)
 
     // 5. calculate content length (after msg length and '|' so we use num 5)
     int content_length = received_length - 5;
-    fprintf(stdout, "received length: %d, content length: %d, stated length: %d\n", received_length, content_length, stated_length);
+    // fprintf(stdout, "received length: %d, content length: %d, stated length: %d\n", received_length, content_length, stated_length); // debug print
 
     // 6. check length mismatch and field structure
     if (content_length < stated_length && validate_fields(&buf[5], content_length, type))
@@ -85,6 +86,90 @@ int check_framing_errors(char buf[], int received_length)
     }
 
     return 0;
+}
+
+// function to parse through message
+void parse_msg(char buf[], char *msg[], char token_storage[][256], int max_tokens)
+{
+    char *token;
+    int count = 0;
+    token = strtok(buf, "|");
+
+    while (token != NULL && count < max_tokens)
+    {
+        strcpy(token_storage[count], token);
+        msg[count] = token_storage[count];
+
+        count++;
+        token = strtok(NULL, "|"); 
+    }
+
+    // print_parsed_msg(msg, count); // debug
+    return;
+}
+
+// function to find and start a game -> on success, return game id; on failure, return -1
+int findAndStartGame(client clients[], int num_clients, game_instance games[], int *num_games)
+{
+    int player1_index = -1;
+    int player2_index = -1;
+    int found = 0;
+
+    // find two players in WAITING state
+    for (int i = 0; i < num_clients && found < 2; i++)
+    {
+        if (clients[i].state == WAITING)
+        {
+            if (found == 0)
+            {
+                player1_index = i;
+                found++;
+            }
+            else
+            {
+                player2_index = i;
+                found++;
+            }
+        }
+    }
+
+    // if two players waiting, start a game
+    if (found == 2)
+    {
+        // create new game instance
+        game_instance new_game;
+        new_game.game_id = *num_games; // ID = game #
+        new_game.player1_socket = clients[player1_index].socket_fd;
+        new_game.player2_socket = clients[player2_index].socket_fd;
+        strcpy(new_game.player1_name, clients[player1_index].name);
+        strcpy(new_game.player2_name, clients[player2_index].name);
+        new_game.current_turn = 1; // player 1 starts
+
+        // initialize board 
+        new_game.board[0] = 1;
+        new_game.board[1] = 3;
+        new_game.board[2] = 5;
+        new_game.board[3] = 7;
+        new_game.board[4] = 9;
+
+        // add game to games array
+        games[*num_games] = new_game;
+        (*num_games)++;
+
+        // update client states
+        clients[player1_index].state = PLAYING;
+        clients[player1_index].game_id = new_game.game_id;
+        clients[player2_index].state = PLAYING;
+        clients[player2_index].game_id = new_game.game_id;
+
+        // printf("Started game %d: %s vs %s\n",
+        //        new_game.game_id, new_game.player1_name, new_game.player2_name); // debug print
+
+        // add play msg here!!!!!!!!!!!
+        return new_game.game_id; // return game id
+    }
+
+    return -1; // no game started
 }
 
 int main(int argc, char **argv)
@@ -121,9 +206,7 @@ int main(int argc, char **argv)
         client new_client;
         new_client.socket_fd = client_socket;
         new_client.state = CONNECTED;
-
-        clients[num_clients] = new_client;
-        num_clients++;
+        new_client.game_id = -1;
 
         fprintf(stdout, "Client %d connected\n", client_socket); // server-side log
 
@@ -145,24 +228,55 @@ int main(int argc, char **argv)
         {
             send_fail_msg(client_socket, "10 Invalid");
             close(client_socket);
+            continue;
         }
 
         // fprintf(stdout, "no framing errors for msg %s\n", buf); // debug print
 
-        // if no framing errors, parse message
         char temp[256];
-        if (parse_msg(strcpy(temp, buf)) != 0){
+        char *msg[5];
+        char token_storage[10][256]; // arbitrary
 
+        parse_msg(strcpy(temp, buf), msg, token_storage, 5); // if no framing errors, parse message
+        // fprintf(stdout, "Player name: %s\n", msg[3]); // debug print
+
+        if (strcmp(msg[2], "OPEN") != 0)
+        {                                               // check if OPEN type
+            send_fail_msg(client_socket, "10 Invalid"); // not sure if this would count as 10 invalid tho
+            close(client_socket);
+            continue;
         }
 
-        // after a succeessful OPEN from client, server sends WAIT message
-        // int wait_status = send_wait_msg(client_socket);
+        if (strlen(msg[3]) >= 73)
+        {
+            send_fail_msg(client_socket, "21 Long Name");
+            close(client_socket);
+            continue;
+        }
 
-        // check if there are 2 available players to start a game
+        // after a succeessful OPEN from client, server sends WAIT message & updates client info
+        strcpy(new_client.name, msg[3]);
+        new_client.state = WAITING;
+        send_wait_msg(client_socket);
 
-        close(client_socket);
+        clients[num_clients] = new_client;
+        num_clients++;
+
+        // fprintf(stdout, "Added client: socket %d, name %s, state %d\n",
+        //         new_client.socket_fd, new_client.name, new_client.state); // debug print
+        // check if we can start a game
+        if (countWaitingPlayers(clients, num_clients) >= 2)
+        {
+            int game_id = findAndStartGame(clients, num_clients, games, &num_games);
+            if (game_id != -1)
+            {
+                // continue update here
+            }
+        }
     }
 
+    close_client_sockets(clients, num_clients);
     close(listener_socket);
     return 0;
+
 }

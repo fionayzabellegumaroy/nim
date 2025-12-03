@@ -13,10 +13,11 @@ netID: fag46
 2. enum client_state defines whether a client is connected, waiting, playing, or disconnected
 3. struct game_instance defines the names of both player one and player two, the sockets of both players, the board state using an int array, and the current player. 
 4. struct client defines the socket file descriptor, name, state, and the game id (when/if we choose to implement multiple games systems)
+    a. game id = -1 if not in a game yet
 
 ### Design:
 1. Set up server that has one listening socket
-2. Each client gets their own socket FD (which will be trackd with client_info)
+2. Each client gets their own socket FD (which will be tracked with client struct)
 3. Once there are 2 available clients in clients[], match them to a game
 4. Once a game starts, will utilize helper functions to send our messages and parse through the messages (i.e. int send_play_msg(int socket, int turn, int[] board) and int parse_move_msg(char *buffer, char *name) [ able to do char *name since names are unique, or we could also keep track giving a client struct idk])
 5. and so on? 
