@@ -42,8 +42,160 @@ Player 2 should respond with MOVE
 Process repeats
 
 ## Tests:
+### Logic Testing
+__Requirement:__
+This will test one game flow to see if everything actually works
+__Detection method:__
+
+__Test:__
 
 
+__Requirement:__
+This will test if multiple games can occur [if we decide to do this]
+__Detection method:__
+
+__Test:__
+
+__Requirement:__ [maybe this will be helper function so we don't really need to test this?]
+parse_msg() parses message into an array to have better lookup 
+
+__Detection method:__
+Given an array of parameters to pipe through parse_msg(), the function will modify an array, separating the message into tokens. Test program will then compare expected modified array to the function's modified array, and print out whether it matches or not.
+
+__Test:__
+1. correctFormat(): Input will be "0|11|OPEN|ALICE|" to act as a positive test for the function. Function's modified array should match expected array" 
+
+__Requirement:__
+find_and_start_game() starts a game for two players given there are 2 WAITING players in the server [ or not if there are not at least 2 ]
+
+__Detection method:__
+Given a clients array, amongst other parameters, to pipe through find_and_start_game(), the function returns a unique game id on success or -1 on failure. 
+
+__Test:__
+1. noWaiting(): clients[] will have two CONNECTED players to test function's capability to determine if a game can be started or not. This function should return -1 since there are no WAITING players. 
+
+2. twoWaiting(): clients[] will have two WAITING players to test function's capability to determine if a game can be started or not. This function should return a game id (1 since there are 0 games before this function runs).
+
+3. multipleWaiting(): clients[] will have 8 WAITING players to test function's capability to start multiple games [idk if this is necessarily needed; might be tested under the multiple players requirement] and test if function will give game IDs sequentially.
+
+4. mixedStates() clients[] will have a variety of states: 3 WAITING, 2 CONNECTED, and 2 PLAYING. This test will test function's capability of only setting up a game given there is a variety of states in clients[].
+
+### Protocol
+__Requirement:__ 
+tbd but basically tests message types and server response
+
+__Detection method:__ 
+tbd
+
+__Test:__
+1. testOpen():
+
+2. testWait():
+
+3. testName():
+
+4. testPlay():
+
+5. testMove():
+
+6. testOver():
+
+7. testFail():
+
+8. testUnknown():
+
+__Requirement:__ 
+Player names have a maximum name length of 72 chars, does not contain any control characters, and non-ASCII characters.
+
+__Detection method:__ 
+tbd
+
+__Test:__
+1. correctName():
+
+2. controlChars():
+
+3. incorrectLength():
+
+4. nonASCII():
+
+__Requirement:__  [idk about this one]
+There is a correct message flow. tbd [might not need to test this tbh]
+
+__Detection method:__ 
+tbd but maybe we put into an array the clients' message flow and sees if correct flow, and same could be for server hmm
+
+__Test:__
+
+### Errors Conditions
+__Requirement:__ 
+tbd session errors
+
+__Detection method:__ 
+tbd
+
+__Test:__
+1. tbd(): Test if program correctly handles behavior of client disconnecting before being placed in a game
+
+2. tbd() Test if program correctly handles behavior of client disconnecting during a game -> forfeit. 
+
+__Requirement:__ 
+tbd protocol errors
+__Detection method:__ 
+tbd
+
+__Test:__
+1. tbd(): Test if program correctly handles behavior of client sending OPEN with a name longer than 72 chars (server should respond with FAIL and message code 21 Long Name and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
+
+2. tbd():  Test if program correctly handles behavior of client sending OPEN with a name already used by a player in an on-going game (server should respond with FAIL and message code 22 Already Playing and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
+
+3. tbd():  Test if program correctly handles behavior of client sending OPEN a second time (server should respond with FAIL and message code 23 Already Open and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
+
+4. tbd():  Test if program correctly handles behavior of client sending MOVE before game begin before receiving WAIT (server should respond with FAIL and message code 24 Not Playing and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
+
+5. tbd():  Test if program correctly handles behavior of client sending MOVE before game begin before receiving NAME (server should respond with FAIL and message code 24 Not Playing and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
+
+6. tbd():  Test if program correctly handles behavior of client sending MOVE when it is not their turn (server should respond with FAIL and message code 31 Impatient and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
+
+7. tbd():  Test if program correctly handles behavior of client sending a move that is not allowed, specifically incorrect pile index, (server should respond with FAIL and message code 32 Pile Index and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
+
+8. tbd():  Test if program correctly handles behavior of client sending a move that is not allowed, specifically incorrect quantity, (server should respond with FAIL and message code 33 Quantity and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
+
+
+__Requirement:__ 
+check_framing_errors() ensures that the message is correctly formatted as stated in the writeup.
+
+__Detection method:__ 
+Given an array of parameters to pipe through check_framing_errors, the function will return -1 if there is a presentation error and 0 if there is none. 
+
+__Test:__
+1. correctFormat(): Input will be "0|11|OPEN|ALICE|" to act as a positive test for the function. Function should return 0, meaning function correctly checks.
+
+2. lengthGreaterThan5(): Input will be "0|03|OPEN|" to test if function is capable of testing whether a length is less than 5. This should return -1, meaning function correctly checks error. 
+
+3. length2Digits(): Input will be "0|9|OPEN|BOB|" to test if function is capable of testing whether the message length is two decimal digits followed by a vertical bar. This should return -1, meaning function correctly checks error.
+
+4. messageShort(): Input will be "0|18|OPEN|ALICE|" to test if function is capable of determining whether the stated message length matches content length [ messagee after "0|message length|" ]. This should return -1, meaning function correctly determines that the content length is shorter than the estated length.
+
+5. messageLong(): Input will be "0|05|OPEN|ALICE|" to test if function is capable of determining whether the stated message length matches content length [ messagee after "0|message length|" ]. This should return -1, meaning function correctly determines that the content length is longer than the estated length.
+
+6. lengthLessThan104(): Input will be "0|110|...|" to test if function is capable of determining whether entire message length is less than 105 bytes.
+ 
+7. incorrectVersion(): Input will be "1|11|OPEN|ALICE|" to test if function correctly determines if message only has version 0. Test will return -1 since messages should only have 0 for version. 
+
+8. extraFields():
+
+9. emptyFields(): 
+
+### Other
+
+__Requirement:__ 
+check_framing_errors() ensures that the message is correctly formatted as stated in the writeup.
+
+__Detection method:__ 
+Given an array of parameters to pipe through check_framing_errors, the function will return -1 if there is a presentation error and 0 if there is none. 
+
+__Test:__
 
 ## Questions For Project:
 1. Do we delete clients folder before submission?
@@ -53,3 +205,5 @@ Process repeats
 4. Writeup says that client can send FAIL, but doesn't specify how server should handle it. We can maybe close the socket id OR we log that fail and then continue on.
 5. Where do we want to check if version is 0? I currently have it under framing errors
 6. Do we want to treat client giving server type messages as a framing error (rn i put it as is)
+7. How do we want to deal with empty fields like "0|15|OPEN|ALICE||" and extra fields [ im thinking we can deem this as an error ]
+8. Spec says,"client sending OPEN with a name already used by a player in an on-going game" is an error, but doesn't this imply that if a player is WAITING or CONNECTED we can use that name? I kind of don't like that, but idk if that is a design choice we can make.
