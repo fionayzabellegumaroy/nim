@@ -1,3 +1,6 @@
+#ifndef NIMD_H
+#define NIMD_H
+
 #include "clients/src/network.h"
 #include "clients/src/pbuf.h"
 
@@ -51,3 +54,5 @@ int validate_fields(char buf[], int check_length, char* type);
 // from clients/network.h
 int connect_inet(char *host, char *service);
 int open_listener(char *service, int queue_size);
+
+#endif /* NIMD_H */

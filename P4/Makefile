@@ -8,13 +8,12 @@ NETWORK = clients/src/network.h # remove later
 PBUF = clients/src/pbuf.h # remove later
 CLIENTS = clients/src/
 
-# gets all tests (exclude helper.c since it's included by testingInterface.c)
-TESTS := $(filter-out tests/helper.c, $(wildcard tests/*.c))
+# gets all tests 
+TESTS := $(filter-out tests/helper.c tests/runTests.c, $(wildcard tests/*.c))
 
 TEST_OUTPUTS := $(patsubst tests/%.c, $(BUILD_FOLDER)/%, $(TESTS))
 
-all: nimd rawc # remove rawc later
-# ${TEST_OUTPUTS}
+all: nimd rawc ${TEST_OUTPUTS} 
 
 nimd: nimd.c $(NETWORK) $(PBUF) nimd.h clients/src/network.c helper.c
 	@mkdir -p $(BUILD_FOLDER)
@@ -27,7 +26,8 @@ rawc: ${CLIENTS}rawc.o ${CLIENTS}pbuf.o ${CLIENTS}network.o
 # recipe to build each test output
 $(BUILD_FOLDER)/%: tests/%.c
 	@mkdir -p $(BUILD_FOLDER)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ helper.c ${CLIENTS}pbuf.o ${CLIENTS}network.o
+
 
 # run a single test: make runTest TEST=someTest
 runTest: all
