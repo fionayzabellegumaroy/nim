@@ -171,15 +171,15 @@ Given an array of parameters to pipe through check_framing_errors, the function 
 __Test:__
 1. correctFormat(): Input will be "0|11|OPEN|ALICE|" to act as a positive test for the function. Function should return 0, meaning function correctly checks.
 
-2. lengthGreaterThan5(): Input will be "0|03|OPEN|" to test if function is capable of testing whether a length is less than 5. This should return -1, meaning function correctly checks error. 
+2. lengthGreaterThan5(): Input will be "0|03|...|" to test if function is capable of testing whether a length is less than 5. This should return -1, meaning function correctly checks error. 
 
 3. length2Digits(): Input will be "0|9|OPEN|BOB|" to test if function is capable of testing whether the message length is two decimal digits followed by a vertical bar. This should return -1, meaning function correctly checks error.
 
-4. messageShort(): Input will be "0|18|OPEN|ALICE|" to test if function is capable of determining whether the stated message length matches content length [ messagee after "0|message length|" ]. This should return -1, meaning function correctly determines that the content length is shorter than the estated length.
+4. messageShort(): Input will be "0|18|OPEN|ALICE|" to test if function is capable of determining whether the stated message length matches content length [ messagee after "0|message length|" ]. This should return -1, meaning function correctly determines that the content length is shorter than the stated length.
 
-5. messageLong(): Input will be "0|05|OPEN|ALICE|" to test if function is capable of determining whether the stated message length matches content length [ messagee after "0|message length|" ]. This should return -1, meaning function correctly determines that the content length is longer than the estated length.
+5. messageLong(): Input will be "0|05|OPEN|ALICE|" to test if function is capable of determining whether the stated message length matches content length [ messagee after "0|message length|" ]. This should return -1, meaning function correctly determines that the content length is longer than the stated length.
 
-6. lengthLessThan104(): Input will be "0|110|...|" to test if function is capable of determining whether entire message length is less than 105 bytes.
+6. lengthMoreThan104(): Input will be "0|110|...|" to test if function is capable of determining whether entire message length is less than 105 bytes.
  
 7. incorrectVersion(): Input will be "1|11|OPEN|ALICE|" to test if function correctly determines if message only has version 0. Test will return -1 since messages should only have 0 for version. 
 
