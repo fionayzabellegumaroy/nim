@@ -44,7 +44,7 @@ void send_fail_msg(int socket_fd, char* reason);
 int send_play_msg(int socket_fd, int pile, int stones);
 void send_wait_msg(int socket_fd);
 int validate_fields(char buf[], int check_length, char* type);
-
+int validate_name(client clients[], int max_clients, int client_socket, char *name);
 
 // might need to remove this before submission
 

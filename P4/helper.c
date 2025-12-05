@@ -3,6 +3,69 @@
 #include <unistd.h>
 #include <string.h>
 #include "nimd.h"
+
+void close_client_sockets(client clients[], int num_clients)
+{
+    for (int i = 0; i < num_clients; i++)
+    {
+        close(clients[i].socket_fd);
+    }
+}
+
+// helper function to count waiting players
+int num_waiting_players(client clients[], int num_clients)
+{
+    int count = 0;
+    for (int i = 0; i < num_clients; i++)
+    {
+        if (clients[i].state == WAITING)
+        {
+            count++;
+        }
+    }
+
+    printf("waiting players: %d\n", count); // debug print
+    return count;
+}
+
+void print_parsed_msg(char *msg[], int count)
+{
+    fprintf(stdout, "print parsed msg:\n");
+    if (msg == NULL || count <= 0)
+        return;
+    for (int i = 0; i < count; i++)
+    {
+        if (msg[i] == NULL)
+            break;
+        fprintf(stdout, "%s\n", msg[i]);
+    }
+    return;
+}
+
+// will this call ever fail? if so, change to int return type
+void send_fail_msg(int socket_fd, char *reason)
+{
+    char msg[256];
+    int msg_len = 6 + strlen(reason);
+    snprintf(msg, sizeof(msg), "0|%02d|FAIL|%s|", msg_len, reason);
+    write(socket_fd, msg, strlen(msg));
+    return;
+}
+
+// temp
+int send_play_msg(int socket_fd, int pile, int stones)
+{
+    return 0;
+}
+
+void send_wait_msg(int socket_fd)
+{
+    char msg[] = "0|05|WAIT|";
+    printf("Sending wait message: %s\n", msg);
+    write(socket_fd, msg, sizeof(msg));
+    return;
+}
+
 // helper function to check if message is valid and is terminated within stated length
 int validate_fields(char buf[], int check_length, char *type)
 {
@@ -41,77 +104,23 @@ int validate_fields(char buf[], int check_length, char *type)
     return 0;
 }
 
-// temp
-int send_play_msg(int socket_fd, int pile, int stones)
+int validate_name(client clients[], int num_clients, int client_socket, char *name) // Change parameter name
 {
-    return 0;
-}
-
-void send_wait_msg(int socket_fd)
-{
-    char msg[] = "0|05|WAIT|";
-    printf("Sending wait message: %s\n", msg);
-    write(socket_fd, msg, sizeof(msg));
-    return;
-}
-
-// will this call ever fail? if so, change to int return type
-void send_fail_msg(int socket_fd, char *reason)
-{
-    char msg[256];
-    int msg_len = 6 + strlen(reason);
-    snprintf(msg, sizeof(msg), "0|%02d|FAIL|%s|", msg_len, reason);
-    write(socket_fd, msg, strlen(msg));
-    return;
-}
-
-void print_parsed_msg(char *msg[], int count)
-{
-    fprintf(stdout, "print parsed msg:\n");
-    if (msg == NULL || count <= 0)
-        return;
-    for (int i = 0; i < count; i++)
+    // checks for long name
+    if (strlen(name) >= 73)
     {
-        if (msg[i] == NULL)
-            break;
-        fprintf(stdout, "%s\n", msg[i]);
+        send_fail_msg(client_socket, "21 Long Name");
+        return 0;
     }
-    return;
-}
 
-// helper function to just check if a player is available
-int has_available_player(client clients[], int num_clients)
-{
-    for (int i = 0; i < num_clients; i++)
+    // checks for duplicate name
+    for (int i = 0; i < num_clients; i++) // Use num_clients (the parameter)
     {
-        if (clients[i].state == WAITING)
+        if (clients[i].state != CONNECTED && strcmp(clients[i].name, name) == 0)
         {
-            return 1; // Found one
+            send_fail_msg(client_socket, "22 Already Playing");
+            return 0;
         }
     }
-    return 0; // None found
-}
-
-// helper function to count waiting players
-int num_waiting_players(client clients[], int num_clients)
-{
-    int count = 0;
-    for (int i = 0; i < num_clients; i++)
-    {
-        if (clients[i].state == WAITING)
-        {
-            count++;
-        }
-    }
-
-    printf("waiting players: %d\n", count); // debug print
-    return count;
-}
-
-void close_client_sockets(client clients[], int num_clients)
-{
-    for (int i = 0; i < num_clients; i++)
-    {
-        close(clients[i].socket_fd);
-    }
+    return 1;
 }
