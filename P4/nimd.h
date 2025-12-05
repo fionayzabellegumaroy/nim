@@ -1,6 +1,3 @@
-#ifndef NIMD_H
-#define NIMD_H
-
 #include "clients/src/network.h"
 #include "clients/src/pbuf.h"
 
@@ -38,13 +35,19 @@ typedef struct {
 // from helper.c
 void close_client_sockets(client clients[], int num_clients);
 int num_waiting_players(client clients[], int num_clients);
+
 // int has_available_player(client clients[], int num_clients);
 void print_parsed_msg(char* msg[], int count);
+
 void send_fail_msg(int socket_fd, char* reason);
 int send_play_msg(int socket_fd, int pile, int stones);
 void send_wait_msg(int socket_fd);
+int send_name_msg(int socket_fd, int player_num, const char *opponent_name);
+
+int send_play_state(int socket_fd, int next_player, int board[5]);
+
 int validate_fields(char buf[], int check_length, char* type);
-int validate_name(client clients[], int max_clients, int client_socket, char *name);
+int validate_name(client clients[], int num_clients, int client_socket, char *name);
 
 // might need to remove this before submission
 
@@ -54,5 +57,3 @@ int validate_name(client clients[], int max_clients, int client_socket, char *na
 // from clients/network.h
 int connect_inet(char *host, char *service);
 int open_listener(char *service, int queue_size);
-
-#endif /* NIMD_H */

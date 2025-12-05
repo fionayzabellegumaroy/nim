@@ -60,7 +60,7 @@ int send_play_msg(int socket_fd, int pile, int stones)
 
 void send_wait_msg(int socket_fd)
 {
-    char msg[] = "0|05|WAIT|";
+    char msg[] = "0|05|WAIT|\n";
     printf("Sending wait message: %s\n", msg);
     write(socket_fd, msg, sizeof(msg));
     return;

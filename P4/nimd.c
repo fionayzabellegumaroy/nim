@@ -107,6 +107,38 @@ void parse_msg(char buf[], char *msg[], char token_storage[][256], int max_token
     return;
 }
 
+int send_name_msg(int socket_fd, int player_num, const char *opponent_name) {
+    char msg[256];
+
+    char body[256];
+    snprintf(body, sizeof(body), "NAME|%d|%s|", player_num, opponent_name);
+
+    int body_len = (int)strlen(body);         
+    snprintf(msg, sizeof(msg), "0|%02d|%s", body_len, body);
+
+    fprintf(stdout, "Sending NAME message: %s\n", msg);
+    return (int)write(socket_fd, msg, strlen(msg));
+}
+
+int send_play_state(int socket_fd, int next_player, int board[5]) {
+    char msg[256];
+
+    char board_str[64];
+    snprintf(board_str, sizeof(board_str),
+             "%d %d %d %d %d",
+             board[0], board[1], board[2], board[3], board[4]);
+
+    char body[256];
+    snprintf(body, sizeof(body), "PLAY|%d|%s|", next_player, board_str);
+
+    int body_len = (int)strlen(body);
+    snprintf(msg, sizeof(msg), "0|%02d|%s", body_len, body);
+
+    fprintf(stdout, "Sending PLAY message: %s\n", msg); // debug
+    return (int)write(socket_fd, msg, strlen(msg));
+}
+
+
 // function to find and start a game -> on success, return game id; on failure, return -1
 int find_and_start_game(client clients[], int num_clients, game_instance games[], int *num_games)
 {
@@ -171,6 +203,8 @@ int find_and_start_game(client clients[], int num_clients, game_instance games[]
     return -1; // no game started
 }
 
+
+
 int main(int argc, char **argv)
 {
     setvbuf(stdout, NULL, _IONBF, 0); // disable buffering for consistent prints
@@ -182,7 +216,6 @@ int main(int argc, char **argv)
     }
 
     int listener_socket = open_listener(argv[1], 10);
-
     if (listener_socket < 0)
     {
         fprintf(stderr, "Error: Failed to create listening socket\n");
@@ -194,95 +227,74 @@ int main(int argc, char **argv)
     while (1)
     {
         int client_socket = accept(listener_socket, NULL, NULL);
-
         if (client_socket < 0)
         {
             perror("accept");
             continue;
         }
 
-        write(client_socket, "You have successfully connected to nimd server", 47); // client-side log
+        fprintf(stdout, "Client %d connected\n", client_socket);
 
-        int first_msg = 1;
-        while (1)
+        int bytes = read(client_socket, buf, 255);
+        if (bytes <= 0) {
+            fprintf(stderr, "Client disconnected before sending OPEN\n");
+            close(client_socket);
+            continue;
+        }
+        buf[bytes] = '\0';
+
+        if (check_framing_errors(buf, bytes) != 0) {
+            send_fail_msg(client_socket, "10 Invalid");
+
+            close(client_socket);
+            continue;
+        }
+
+        char temp[256];
+        char *msg[5];
+        char token_storage[10][256];
+
+        strcpy(temp, buf);
+        parse_msg(temp, msg, token_storage, 5);
+
+        if (strcmp(msg[2], "OPEN") != 0) 
         {
+            send_fail_msg(client_socket, "10 Invalid");
 
-            // read message from client [ should be an OPEN message ]
-            int bytes = read(client_socket, buf, 255);
-            buf[bytes] = '\0';
+            close(client_socket);
+            continue;
+        }
 
-            if (bytes <= 0)
+        if (!validate_name(clients, num_clients, client_socket, msg[3])) 
+        {
+            close(client_socket);
+            continue;
+        }
+
+        client new_client;
+        new_client.socket_fd = client_socket;
+        new_client.state = WAITING;
+        new_client.game_id = -1;
+
+        strcpy(new_client.name, msg[3]);
+
+        send_wait_msg(client_socket);
+
+        clients[num_clients] = new_client;
+        num_clients++;
+
+        if (num_waiting_players(clients, num_clients) >= 2) {
+            int game_id = find_and_start_game(clients, num_clients, games, &num_games);
+            if (game_id != -1) 
             {
-                fprintf(stderr, "Client disconnected\n");
-                close(client_socket);
-                continue;
-            }
+                game_instance *g = &games[game_id];
+                
+                send_name_msg(g->player1_socket, 1, g->player2_name);
+                send_name_msg(g->player2_socket, 2, g->player1_name);
 
-            // check for framing errors before parsing
-            if (check_framing_errors(buf, strlen(buf)) != 0)
-            {
-                send_fail_msg(client_socket, "10 Invalid");
-                close(client_socket);
-                continue;
-            }
+                send_play_state(g->player1_socket, g->current_turn, g->board);
+                send_play_state(g->player2_socket, g->current_turn, g->board);
 
-            // fprintf(stdout, "no framing errors for msg %s\n", buf); // debug print
-
-            char temp[256];
-            char *msg[5];
-            char token_storage[10][256]; // arbitrary
-
-            parse_msg(strcpy(temp, buf), msg, token_storage, 5); // if no framing errors, parse message
-            // fprintf(stdout, "Player name: %s\n", msg[3]); // debug print
-
-            if (strcmp(msg[2], "OPEN") != 0)
-            {
-                send_fail_msg(client_socket, "10 Invalid");
-                close(client_socket);
-                continue;
-            }
-
-            printf("Processing OPEN message from client %d with name %s\n", client_socket, msg[3]);
-
-            if (!first_msg)
-            {
-                // double_open already sends FAIL message and closes socket
-                send_fail_msg(client_socket, "23 Already Open");
-                fprintf(stdout, "Double open detected. Connection %d closed.\n", client_socket);
-                continue;
-            }
-
-            if (!validate_name(clients, num_clients, client_socket, msg[3]))
-            {
-                close(client_socket);
-                fprintf(stdout, "Invalid name detected. Closing connection with client socket %d.\n", client_socket); // is this a debug print or do we want server to print this
-                continue;
-            }
-
-            // after a succeessful OPEN from client & validation of name, server sends WAIT message & updates client info
-            client new_client;
-            new_client.socket_fd = client_socket;
-            new_client.state = WAITING;
-            new_client.game_id = -1;
-            strcpy(new_client.name, msg[3]);
-
-            send_wait_msg(client_socket);
-            clients[num_clients] = new_client;
-            num_clients++;
-
-            first_msg = 0; // mark that first message has been processed
-
-            // fprintf(stdout, "Added client: socket %d, name %s, state %d\n",
-            //         new_client.socket_fd, new_client.name, new_client.state); // debug print
-
-            // check if we can start a game
-            if (num_waiting_players(clients, num_clients) >= 2)
-            {
-                int game_id = find_and_start_game(clients, num_clients, games, &num_games);
-                if (game_id != -1)
-                {
-                    // continue update here
-                }
             }
         }
     }
