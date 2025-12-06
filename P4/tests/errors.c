@@ -3,35 +3,92 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #define main not_main
 #include "../nimd.c"
 #undef main
 
-/* helper.c is linked in via the Makefile; do not include the .c file here to avoid duplicate symbols */
+int longName()
+{
+    printf("_________________________________________________\n\n");
+    printf("Test One: Testing if program correctly handles long names.\n\n");
 
-// int runInInteractive() // skeleton
-// {
-//     printf("_________________________________________________\n\n");
-//     printf("Test One: Testing if program will run in interactive mode.\n\n");
+    client clients[1];
 
-//     char *argv[] = {"mysh"};
-//     int argc = sizeof(argv) / sizeof(argv[0]);
+    int status = validate_name(clients, 1, 5, "haluhglauirhglauihrglauhgrlurhglsiuhrgauhrglaurhgauhglauhrglaurghaluirghaiughaiuhgr");
 
-//     int status = initializeShell(argc, argv);
-//     (void) status;
+    fprintf(stdout, "Name length: %lu\n\n", strlen("haluhglauirhglauihrglauhgrlurhglsiuhrgauhrglaurhgauhglauhrglaurghaluirghaiughaiuhgr"));
 
-//     printf("\nInteractive: %d\n\n", interactive);
+    fprintf(stdout, "Status returned: %d\n\n", status);
 
-//     if (!interactive)
-//     {
-//         printf("Test failed: Interactive mode test failed.\n");
-//         return 1;
-//     }
+    if (status)
+    {
+        printf("\tTest failed: test incorrectly did not catch the error.\n");
+        return 1;
+    }
 
-//     printf("Test suceeded: Interactive mode test succeeded.\n");
-//     return 0;
-// }
+    printf("Test suceeded: Name length exceeds 72 characters as expected and tested printed an error.\n");
+    return 0;
+}
+
+int alreadyPlaying()
+{
+    printf("_________________________________________________\n\n");
+    printf("Test Two: Testing if program correctly handles already playing names.\n\n");
+
+    client clients[2];
+    int num_clients = 2;
+
+    client player_one = {.socket_fd = 5, .name = "Alice", .state = PLAYING, .game_id = 0};
+
+    clients[0] = player_one;
+
+    fprintf(stdout, "Player One Name: %s\n\n", clients[0].name);
+    fprintf(stdout, "Test Name: %s\n\n", "Alice");
+
+    int status = validate_name(clients, num_clients, player_one.socket_fd, player_one.name);
+
+    fprintf(stdout, "Status returned: %d\n\n", status);
+
+    if (status)
+    {
+        printf("\tTest failed: test incorrectly did not catch the error.\n");
+        return 1;
+    }
+
+    printf("Test suceeded: Name is already playing and as expected, test printed an error.\n");
+    return 0;
+}
+
+int doubleOpen()
+{
+    printf("_________________________________________________\n\n");
+    printf("Test Three: Testing if program correctly handles double open.\n\n");
+
+    client clients[2];
+    int num_clients = 2;
+
+    client player_one = {.socket_fd = 5, .name = "Alice", .state = PLAYING, .game_id = 0};
+
+    clients[0] = player_one;
+
+    fprintf(stdout, "Player One Name: %s\n\n", clients[0].name);
+    fprintf(stdout, "Test Name: %s\n\n", "Alice");
+
+    int status = validate_name(clients, num_clients, player_one.socket_fd, player_one.name);
+
+    fprintf(stdout, "Status returned: %d\n\n", status);
+
+    if (status)
+    {
+        printf("\tTest failed: test incorrectly did not catch the error.\n");
+        return 1;
+    }
+
+    printf("Test suceeded: Name is already playing and as expected, test printed an error.\n");
+    return 0;
+}
 
 int noWaiting()
 {
@@ -145,7 +202,7 @@ int mixedStates()
     fprintf(stdout, "\tPlayer %s state: %d game id: %d\n", clients[3].name, clients[3].state, clients[3].game_id);
     fprintf(stdout, "\tPlayer %s state: %d game id: %d\n", clients[4].name, clients[4].state, clients[4].game_id);
     fprintf(stdout, "\tPlayer %s state: %d game id: %d\n", clients[5].name, clients[5].state, clients[5].game_id);
-    
+
     fprintf(stdout, "Game id: %d\n\n", game_id);
 
     if (game_id != 1)
@@ -158,7 +215,8 @@ int mixedStates()
     return 0;
 }
 
-int correctFormat(){
+int correctFormat()
+{
     printf("_________________________________________________\n\n");
     printf("Test One: Pass the correct format to check_framing_errors.\n\n");
 
@@ -176,7 +234,8 @@ int correctFormat(){
     return 0;
 }
 
-int lengthGreaterThan5(){
+int lengthGreaterThan5()
+{
     printf("_________________________________________________\n\n");
     printf("Test Two: Tests whether length is greater than 5.\n\n");
 
@@ -194,7 +253,8 @@ int lengthGreaterThan5(){
     return 0;
 }
 
-int length2Digits(){
+int length2Digits()
+{
     printf("_________________________________________________\n\n");
     printf("Test Three: Tests whether length is 2 decimal digits long.\n\n");
 
@@ -212,7 +272,8 @@ int length2Digits(){
     return 0;
 }
 
-int messageShort(){
+int messageShort()
+{
     printf("_________________________________________________\n\n");
     printf("Test Four: Tests whether function can determine if content length is shorter than stated length.\n\n");
 
@@ -230,7 +291,8 @@ int messageShort(){
     return 0;
 }
 
-int messageLong(){
+int messageLong()
+{
     printf("_________________________________________________\n\n");
     printf("Test Five: Tests whether function can determine if content length is longer than stated length.\n\n");
 
@@ -248,7 +310,8 @@ int messageLong(){
     return 0;
 }
 
-int lengthMoreThan104(){
+int lengthMoreThan104()
+{
     printf("_________________________________________________\n\n");
     printf("Test Six: Tests whether function can determine if entire message length is more than 104 characters.\n\n");
 
@@ -266,7 +329,8 @@ int lengthMoreThan104(){
     return 0;
 }
 
-int incorrectVersion(){
+int incorrectVersion()
+{
     printf("_________________________________________________\n\n");
     printf("Test Seven: Test validates that version is 0. \n\n");
 
@@ -284,24 +348,29 @@ int incorrectVersion(){
     return 0;
 }
 
-int extraFields(){
-    //tbd
+int extraFields()
+{
+    // tbd
     return 0;
 }
 
-int emptyFields(){
-    //tbd
+int emptyFields()
+{
+    // tbd
     return 0;
 }
-
-
 
 int main(int argc, char *argv[])
 {
     int failures = 0;
 
+    // protocol errors
+    failures += longName();
+    failures += alreadyPlaying();
+
+    // presentation errors
     failures += correctFormat();
-    failures +- lengthGreaterThan5();
+    failures += lengthGreaterThan5();
     failures += length2Digits();
     failures += messageShort();
     failures += messageLong();

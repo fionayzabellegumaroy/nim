@@ -145,11 +145,11 @@ __Detection method:__
 tbd
 
 __Test:__
-1. tbd(): Test if program correctly handles behavior of client sending OPEN with a name longer than 72 chars (server should respond with FAIL and message code 21 Long Name and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
+1. longName(): Test if program correctly handles behavior of client sending OPEN with a name longer than 72 chars (server should respond with FAIL and message code 21 Long Name and close the connection). To show this, test program will return use validate_name that will return 0 if there's an error and will return 1 if there's no error.
 
-2. tbd():  Test if program correctly handles behavior of client sending OPEN with a name already used by a player in an on-going game (server should respond with FAIL and message code 22 Already Playing and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
+2. alreadyPlaying():  Test if program correctly handles behavior of client sending OPEN with a name already used by a player in an on-going game (server should respond with FAIL and message code 22 Already Playing and close the connection). To show this, test program will return use validate_name that will return 0 if there's an error and will return 1 if there's no error.
 
-3. tbd():  Test if program correctly handles behavior of client sending OPEN a second time (server should respond with FAIL and message code 23 Already Open and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
+3. doubleOpen():  Test if program correctly handles behavior of client sending OPEN a second time (server should respond with FAIL and message code 23 Already Open and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
 
 4. tbd():  Test if program correctly handles behavior of client sending MOVE before game begin before receiving WAIT (server should respond with FAIL and message code 24 Not Playing and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
 
@@ -188,12 +188,12 @@ __Test:__
 9. emptyFields(): 
 
 ### Other
+1. argv is not 2
+2. cannot open listening socket
 
 __Requirement:__ 
-check_framing_errors() ensures that the message is correctly formatted as stated in the writeup.
 
 __Detection method:__ 
-Given an array of parameters to pipe through check_framing_errors, the function will return -1 if there is a presentation error and 0 if there is none. 
 
 __Test:__
 
