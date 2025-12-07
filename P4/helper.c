@@ -114,7 +114,7 @@ int validate_name(client clients[], int num_clients, int client_socket, char *na
     }
 
     // checks for duplicate name
-    for (int i = 0; i < num_clients; i++) // Use num_clients (the parameter)
+    for (int i = 0; i < num_clients; i++)
     {
         if (clients[i].state != CONNECTED && strcmp(clients[i].name, name) == 0)
         {
@@ -122,5 +122,6 @@ int validate_name(client clients[], int num_clients, int client_socket, char *na
             return 0;
         }
     }
+    
     return 1;
 }

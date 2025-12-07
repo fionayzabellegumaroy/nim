@@ -75,12 +75,10 @@ int check_framing_errors(char buf[], int received_length)
     // 6. check length mismatch and field structure
     if (content_length < stated_length && validate_fields(&buf[5], content_length, type))
     { // too short if all field are present and terminates
-        fprintf(stdout, "msg too short\n");
         return -1;
     }
     else if (content_length >= stated_length && !validate_fields(&buf[5], stated_length, type))
     { // too long if not all fields are present and does not terminate within stated length
-        fprintf(stdout, "msg too long\n");
         return -1;
     }
 

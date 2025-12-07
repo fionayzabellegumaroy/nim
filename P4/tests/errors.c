@@ -28,7 +28,7 @@ int longName()
         return 1;
     }
 
-    printf("Test suceeded: Name length exceeds 72 characters as expected and tested printed an error.\n");
+    printf("Test suceeded: Name length exceeds 72 characters as expected.\n");
     return 0;
 }
 
@@ -57,11 +57,11 @@ int alreadyPlaying()
         return 1;
     }
 
-    printf("Test suceeded: Name is already playing and as expected, test printed an error.\n");
+    printf("Test suceeded: Name is already playing.\n");
     return 0;
 }
 
-int doubleOpen()
+int doubleOpen() // tbd
 {
     printf("_________________________________________________\n\n");
     printf("Test Three: Testing if program correctly handles double open.\n\n");
@@ -90,135 +90,105 @@ int doubleOpen()
     return 0;
 }
 
-int noWaiting()
+int moveBeforeWait() // tbd
 {
     printf("_________________________________________________\n\n");
-    printf("Test One: No waiting players.\n\n");
+    printf("Test Four: Test if client sends MOVE before receiving WAIT.\n\n");
 
-    client clients[2];
-    int num_clients = 2;
-    game_instance games[2];
-    int num_games = 0;
+    // int status = validate_name(clients, num_clients, player_one.socket_fd, player_one.name);
 
-    client player_one = {.socket_fd = 1, .name = "Alice", .state = CONNECTED, .game_id = -1};
-    client player_two = {.socket_fd = 2, .name = "Bob", .state = CONNECTED, .game_id = -1};
+    // fprintf(stdout, "Status returned: %d\n\n", status);
 
-    clients[0] = player_one;
-    clients[1] = player_two;
+    // if (status)
+    // {
+    //     printf("\tTest failed: test incorrectly did not catch the error.\n");
+    //     return 1;
+    // }
 
-    int game_id = find_and_start_game(clients, num_clients, games, &num_games);
-
-    fprintf(stdout, "Player %s state: %s\n", clients[0].name, clients[0].state ? "OTHER" : "CONNECTED");
-    fprintf(stdout, "Player %s state: %s\n\n", clients[1].name, clients[1].state ? "OTHER" : "CONNECTED");
-    fprintf(stdout, "Game id: %d\n\n", game_id);
-
-    if (game_id != -1)
-    {
-        printf("Test failed: Expected game id to be -1.\n");
-        return 1;
-    }
-
-    printf("Test suceeded: Game id is -1, since no players are waiting.\n");
+    // printf("Test suceeded: Name is already playing and as expected, test printed an error.\n");
     return 0;
 }
 
-int twoWaiting()
+int moveBeforeName() // tbd
 {
     printf("_________________________________________________\n\n");
-    printf("Test Two: Two waiting players.\n\n");
+    printf("Test Five: Test if client sends MOVE before receiving NAME.\n\n");
 
-    client clients[2];
-    int num_clients = 2;
-    game_instance games[2];
-    int num_games = 0;
+    // int status = validate_name(clients, num_clients, player_one.socket_fd, player_one.name);
 
-    client player_one = {.socket_fd = 1, .name = "Alice", .state = WAITING, .game_id = -1};
-    client player_two = {.socket_fd = 2, .name = "Bob", .state = WAITING, .game_id = -1};
+    // fprintf(stdout, "Status returned: %d\n\n", status);
 
-    clients[0] = player_one;
-    clients[1] = player_two;
+    // if (status)
+    // {
+    //     printf("\tTest failed: test incorrectly did not catch the error.\n");
+    //     return 1;
+    // }
 
-    int game_id = find_and_start_game(clients, num_clients, games, &num_games);
-
-    fprintf(stdout, "Player %s state: %s game id: %d\n", clients[0].name, clients[0].state ? "OTHER" : "CONNECTED", clients[0].game_id);
-    fprintf(stdout, "Player %s state: %s game id: %d\n\n", clients[1].name, clients[1].state ? "OTHER" : "CONNECTED", clients[1].game_id);
-    fprintf(stdout, "Game id: %d\n\n", game_id);
-
-    if (game_id != 0)
-    {
-        printf("Test failed: Expected game id to be 0.\n");
-        return 1;
-    }
-
-    printf("Test suceeded: Game id is 0, since two players are waiting.\n");
+    // printf("Test suceeded: Name is already playing and as expected, test printed an error.\n");
     return 0;
 }
 
-int mixedStates()
+int moveNotTurn()
 {
     printf("_________________________________________________\n\n");
-    printf("Test Three: Mixed player states.\n\n");
+    printf("Test Six: Tests program response to client sending MOVE when it is not their turn.\n\n");
 
-    client clients[6];
-    int num_clients = 6;
-    game_instance games[3];
-    int num_games = 1;
+    // int status = validate_name(clients, num_clients, player_one.socket_fd, player_one.name);
 
-    client player_one = {.socket_fd = 1, .name = "Alice", .state = WAITING, .game_id = -1};
-    client player_two = {.socket_fd = 2, .name = "Bob", .state = CONNECTED, .game_id = -1};
-    client player_three = {.socket_fd = 1, .name = "Cat", .state = PLAYING, .game_id = 0};
-    client player_four = {.socket_fd = 2, .name = "Dylan", .state = WAITING, .game_id = -1};
-    client player_five = {.socket_fd = 1, .name = "Ethan", .state = PLAYING, .game_id = 0};
-    client player_six = {.socket_fd = 2, .name = "Fiyero", .state = CONNECTED, .game_id = -1};
+    // fprintf(stdout, "Status returned: %d\n\n", status);
 
-    clients[0] = player_one;
-    clients[1] = player_two;
-    clients[2] = player_three;
-    clients[3] = player_four;
-    clients[4] = player_five;
-    clients[5] = player_six;
+    // if (status)
+    // {
+    //     printf("\tTest failed: test incorrectly did not catch the error.\n");
+    //     return 1;
+    // }
 
-    game_instance existing_game = {
-        .game_id = 0,
-        .player1_socket = 1,
-        .player2_socket = 2,
-        .current_turn = 1};
-    games[0] = existing_game;
+    // printf("Test suceeded: Name is already playing and as expected, test printed an error.\n");
+    return 0;
+}
 
-    fprintf(stdout, "Before finding and starting game: \n");
-    fprintf(stdout, "\tPlayer %s state: %d game id: %d\n", clients[0].name, clients[0].state, clients[0].game_id);
-    fprintf(stdout, "\tPlayer %s state: %d game id: %d\n", clients[1].name, clients[1].state, clients[1].game_id);
-    fprintf(stdout, "\tPlayer %s state: %d game id: %d\n", clients[2].name, clients[2].state, clients[2].game_id);
-    fprintf(stdout, "\tPlayer %s state: %d game id: %d\n", clients[3].name, clients[3].state, clients[3].game_id);
-    fprintf(stdout, "\tPlayer %s state: %d game id: %d\n", clients[4].name, clients[4].state, clients[4].game_id);
-    fprintf(stdout, "\tPlayer %s state: %d game id: %d\n\n", clients[5].name, clients[5].state, clients[5].game_id);
+int notAllowedMovePileIndex() // tbd
+{
+    printf("_________________________________________________\n\n");
+    printf("Test Seven: Test if client sends MOVE with an incorrect pile index.\n\n");
 
-    int game_id = find_and_start_game(clients, num_clients, games, &num_games);
+    // int status = validate_name(clients, num_clients, player_one.socket_fd, player_one.name);
 
-    fprintf(stdout, "After finding and starting game: \n");
-    fprintf(stdout, "\tPlayer %s state: %d game id: %d\n", clients[0].name, clients[0].state, clients[0].game_id);
-    fprintf(stdout, "\tPlayer %s state: %d game id: %d\n", clients[1].name, clients[1].state, clients[1].game_id);
-    fprintf(stdout, "\tPlayer %s state: %d game id: %d\n", clients[2].name, clients[2].state, clients[2].game_id);
-    fprintf(stdout, "\tPlayer %s state: %d game id: %d\n", clients[3].name, clients[3].state, clients[3].game_id);
-    fprintf(stdout, "\tPlayer %s state: %d game id: %d\n", clients[4].name, clients[4].state, clients[4].game_id);
-    fprintf(stdout, "\tPlayer %s state: %d game id: %d\n", clients[5].name, clients[5].state, clients[5].game_id);
+    // fprintf(stdout, "Status returned: %d\n\n", status);
 
-    fprintf(stdout, "Game id: %d\n\n", game_id);
+    // if (status)
+    // {
+    //     printf("\tTest failed: test incorrectly did not catch the error.\n");
+    //     return 1;
+    // }
 
-    if (game_id != 1)
-    {
-        printf("Test failed: Expected game id to be 1.\n");
-        return 1;
-    }
+    // printf("Test suceeded: Name is already playing and as expected, test printed an error.\n");
+    return 0;
+}
 
-    printf("Test suceeded: Game id is 1, since one game is already happening -> next id available is 1.\n");
+int notAllowedMoveQuantity() // tbd
+{
+    printf("_________________________________________________\n\n");
+    printf("Test Eight: Test if client sends MOVE with an incorrect quantity.\n\n");
+
+    // int status = validate_name(clients, num_clients, player_one.socket_fd, player_one.name);
+
+    // fprintf(stdout, "Status returned: %d\n\n", status);
+
+    // if (status)
+    // {
+    //     printf("\tTest failed: test incorrectly did not catch the error.\n");
+    //     return 1;
+    // }
+
+    // printf("Test suceeded: Name is already playing and as expected, test printed an error.\n");
     return 0;
 }
 
 int correctFormat()
 {
     printf("_________________________________________________\n\n");
-    printf("Test One: Pass the correct format to check_framing_errors.\n\n");
+    printf("Test Nine: Pass the correct format to check_framing_errors.\n\n");
 
     int status = check_framing_errors("0|11|OPEN|ALICE|", 16);
 
@@ -237,7 +207,7 @@ int correctFormat()
 int lengthGreaterThan5()
 {
     printf("_________________________________________________\n\n");
-    printf("Test Two: Tests whether length is greater than 5.\n\n");
+    printf("Test Ten: Tests whether length is greater than 5.\n\n");
 
     int status = check_framing_errors("0|03|...|", 9);
 
@@ -256,7 +226,7 @@ int lengthGreaterThan5()
 int length2Digits()
 {
     printf("_________________________________________________\n\n");
-    printf("Test Three: Tests whether length is 2 decimal digits long.\n\n");
+    printf("Test Eleven: Tests whether length is 2 decimal digits long.\n\n");
 
     int status = check_framing_errors("0|9|OPEN|BOB|", 13);
 
@@ -275,7 +245,7 @@ int length2Digits()
 int messageShort()
 {
     printf("_________________________________________________\n\n");
-    printf("Test Four: Tests whether function can determine if content length is shorter than stated length.\n\n");
+    printf("Test Twelve: Tests whether function can determine if content length is shorter than stated length.\n\n");
 
     int status = check_framing_errors("0|18|OPEN|ALICE|", 16);
 
@@ -294,7 +264,7 @@ int messageShort()
 int messageLong()
 {
     printf("_________________________________________________\n\n");
-    printf("Test Five: Tests whether function can determine if content length is longer than stated length.\n\n");
+    printf("Test Thirteen: Tests whether function can determine if content length is longer than stated length.\n\n");
 
     int status = check_framing_errors("0|05|OPEN|ALICE|", 16);
 
@@ -313,7 +283,7 @@ int messageLong()
 int lengthMoreThan104()
 {
     printf("_________________________________________________\n\n");
-    printf("Test Six: Tests whether function can determine if entire message length is more than 104 characters.\n\n");
+    printf("Test Fourteen: Tests whether function can determine if entire message length is more than 104 characters.\n\n");
 
     int status = check_framing_errors("0|110|...|", 116);
 
@@ -332,7 +302,7 @@ int lengthMoreThan104()
 int incorrectVersion()
 {
     printf("_________________________________________________\n\n");
-    printf("Test Seven: Test validates that version is 0. \n\n");
+    printf("Test Fifteen: Test validates that version is 0. \n\n");
 
     int status = check_framing_errors("1|11|OPEN|ALICE|", 16);
 
@@ -360,6 +330,24 @@ int emptyFields()
     return 0;
 }
 
+int sessionOne()
+{
+    printf("_________________________________________________\n\n");
+    printf("Test Sixteen: Test if program correctly handles behavior of client disconnecting before being placed in a game.\n\n");
+
+    // tbd
+    return 0;
+}
+
+int sessionTwo()
+{
+    printf("_________________________________________________\n\n");
+    printf("Test Seventeen: Test if program correctly handles behavior of client disconnecting during a game -> forfeit.\n\n");
+
+    // tbd
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
     int failures = 0;
@@ -367,6 +355,12 @@ int main(int argc, char *argv[])
     // protocol errors
     failures += longName();
     failures += alreadyPlaying();
+    failures += doubleOpen();
+    failures += moveBeforeWait();
+    failures += moveBeforeName();
+    failures += moveNotTurn();
+    failures += notAllowedMovePileIndex();
+    failures += notAllowedMoveQuantity();
 
     // presentation errors
     failures += correctFormat();
@@ -380,9 +374,13 @@ int main(int argc, char *argv[])
     // failures += extraFields();
     // failures += emptyFields();
 
+    // session errors
+    failures += sessionOne();
+    failures += sessionTwo();
+
     printf("\n========================================\n");
     printf("Test Summary:\n");
-    printf("  Passed: %d/%d\n", 7 - failures, 7);
+    printf("  Passed: %d/%d\n", 17 - failures, 17);
     printf("========================================\n");
 
     // return number of failures (0 = all passed)

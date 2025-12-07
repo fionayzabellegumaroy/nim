@@ -48,22 +48,13 @@ This will test one game flow to see if everything actually works
 __Detection method:__
 
 __Test:__
+1. correctFormat():
+2. protocolError():
+3. sessionError():
+4. framingErrors():
+5. multiplayer():
 
-
-__Requirement:__
-This will test if multiple games can occur [if we decide to do this]
-__Detection method:__
-
-__Test:__
-
-__Requirement:__ [maybe this will be helper function so we don't really need to test this?]
-parse_msg() parses message into an array to have better lookup 
-
-__Detection method:__
-Given an array of parameters to pipe through parse_msg(), the function will modify an array, separating the message into tokens. Test program will then compare expected modified array to the function's modified array, and print out whether it matches or not.
-
-__Test:__
-1. correctFormat(): Input will be "0|11|OPEN|ALICE|" to act as a positive test for the function. Function's modified array should match expected array" 
+___
 
 __Requirement:__
 find_and_start_game() starts a game for two players given there are 2 WAITING players in the server [ or not if there are not at least 2 ]
@@ -82,7 +73,7 @@ __Test:__
 
 ### Protocol
 __Requirement:__ 
-tbd but basically tests message types and server response
+Program correctly responds to all message types.
 
 __Detection method:__ 
 tbd
@@ -90,34 +81,13 @@ tbd
 __Test:__
 1. testOpen():
 
-2. testWait():
+2. testMove():
 
-3. testName():
+3. testFail():
 
-4. testPlay():
+4. testUnknown():
 
-5. testMove():
-
-6. testOver():
-
-7. testFail():
-
-8. testUnknown():
-
-__Requirement:__ 
-Player names have a maximum name length of 72 chars, does not contain any control characters, and non-ASCII characters.
-
-__Detection method:__ 
-tbd
-
-__Test:__
-1. correctName():
-
-2. controlChars():
-
-3. incorrectLength():
-
-4. nonASCII():
+___
 
 __Requirement:__  [idk about this one]
 There is a correct message flow. tbd [might not need to test this tbh]
@@ -129,20 +99,21 @@ __Test:__
 
 ### Errors Conditions
 __Requirement:__ 
-tbd session errors
+Program correctly detects any session errors.
 
 __Detection method:__ 
-tbd
+Tests will utilize printing out the status to reflect whether the program correctly fails given a protocol error, or not. 
 
 __Test:__
-1. tbd(): Test if program correctly handles behavior of client disconnecting before being placed in a game
+1. sessionOne(): Test if program correctly handles behavior of client disconnecting before being placed in a game.
 
-2. tbd() Test if program correctly handles behavior of client disconnecting during a game -> forfeit. 
+2. sessionTwo() Test if program correctly handles behavior of client disconnecting during a game -> forfeit. 
 
 __Requirement:__ 
-tbd protocol errors
+Program correctly detects any protocol errors.
+
 __Detection method:__ 
-tbd
+Tests will utilize printing out the status to reflect whether the program correctly fails given a protocol error, or not. 
 
 __Test:__
 1. longName(): Test if program correctly handles behavior of client sending OPEN with a name longer than 72 chars (server should respond with FAIL and message code 21 Long Name and close the connection). To show this, test program will return use validate_name that will return 0 if there's an error and will return 1 if there's no error.
@@ -151,15 +122,15 @@ __Test:__
 
 3. doubleOpen():  Test if program correctly handles behavior of client sending OPEN a second time (server should respond with FAIL and message code 23 Already Open and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
 
-4. tbd():  Test if program correctly handles behavior of client sending MOVE before game begin before receiving WAIT (server should respond with FAIL and message code 24 Not Playing and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
+4. moveBeforeWait():  Test if program correctly handles behavior of client sending MOVE before game begin before receiving WAIT (server should respond with FAIL and message code 24 Not Playing and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
 
-5. tbd():  Test if program correctly handles behavior of client sending MOVE before game begin before receiving NAME (server should respond with FAIL and message code 24 Not Playing and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
+5. moveBeforeName():  Test if program correctly handles behavior of client sending MOVE before game begin before receiving NAME (server should respond with FAIL and message code 24 Not Playing and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
 
-6. tbd():  Test if program correctly handles behavior of client sending MOVE when it is not their turn (server should respond with FAIL and message code 31 Impatient and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
+6. moveNotTurn():  Test if program correctly handles behavior of client sending MOVE when it is not their turn (server should respond with FAIL and message code 31 Impatient and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
 
-7. tbd():  Test if program correctly handles behavior of client sending a move that is not allowed, specifically incorrect pile index, (server should respond with FAIL and message code 32 Pile Index and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
+7. notAllowedMovePileIndex():  Test if program correctly handles behavior of client sending a move that is not allowed, specifically incorrect pile index, (server should respond with FAIL and message code 32 Pile Index and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
 
-8. tbd():  Test if program correctly handles behavior of client sending a move that is not allowed, specifically incorrect quantity, (server should respond with FAIL and message code 33 Quantity and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
+8. notAllowedMoveQuantity():  Test if program correctly handles behavior of client sending a move that is not allowed, specifically incorrect quantity, (server should respond with FAIL and message code 33 Quantity and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
 
 
 __Requirement:__ 
@@ -206,4 +177,4 @@ __Test:__
 5. Where do we want to check if version is 0? I currently have it under framing errors
 6. Do we want to treat client giving server type messages as a framing error (rn i put it as is)
 7. How do we want to deal with empty fields like "0|15|OPEN|ALICE||" and extra fields [ im thinking we can deem this as an error ]
-8. Spec says,"client sending OPEN with a name already used by a player in an on-going game" is an error, but doesn't this imply that if a player is WAITING or CONNECTED we can use that name? I kind of don't like that, but idk if that is a design choice we can make.
+8. Spec says,"client sending OPEN with a name already used by a player in an on-going game" is an error, but doesn't this imply that if a player is WAITING or CONNECTED we can use that name? I kind of don't like that, but idk if that is a design choice we can make.   
