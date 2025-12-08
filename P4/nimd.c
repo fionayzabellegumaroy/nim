@@ -8,6 +8,8 @@
 #include <netdb.h>
 #include <signal.h>
 #include <errno.h>
+#include <sys/select.h>
+#include <sys/time.h>
 #include "nimd.h"
 
 // might need to do realloc later if we have more clients/games than expected
@@ -219,87 +221,157 @@ int find_and_start_game(client clients[], int num_clients, game_instance games[]
 
 void run_game(game_instance *g)
 {
-    int current_player = g->current_turn;   
+    int current_player = g->current_turn;
 
     while (1) {
-        int cur_sock   = (current_player == 1) ? g->player1_socket : g->player2_socket;
-        int other_sock = (current_player == 1) ? g->player2_socket : g->player1_socket;
+        int p1 = g->player1_socket;
+        int p2 = g->player2_socket;
+        int cur_sock   = (current_player == 1) ? p1 : p2;
+        int other_sock = (current_player == 1) ? p2 : p1;
 
-        send_play_state(g->player1_socket, current_player, g->board);
-        send_play_state(g->player2_socket, current_player, g->board);
+        send_play_state(p1, current_player, g->board);
+        send_play_state(p2, current_player, g->board);
 
-        int bytes = read(cur_sock, buf, sizeof(buf) - 1);
-        if (bytes <= 0) {
-            fprintf(stderr, "Player %d disconnected, forfeit\n", current_player);
-            send_over_msg(other_sock,
-                          (current_player == 1) ? 2 : 1,
-                          g->board,
-                          "Forfeit");
-            close(cur_sock);
-            close(other_sock);
-            return;
+        while (1) {
+            fd_set readfds;
+            FD_ZERO(&readfds);
+            FD_SET(cur_sock, &readfds);
+            FD_SET(other_sock, &readfds);
+            int maxfd = (p1 > p2 ? p1 : p2) + 1;
+
+            int ready = select(maxfd, &readfds, NULL, NULL, NULL);
+            if (ready < 0) {
+                perror("select");
+                send_over_msg(p1, 0, g->board, "Forfeit");
+                send_over_msg(p2, 0, g->board, "Forfeit");
+                close(p1);
+                close(p2);
+                return;
+            }
+
+            if (FD_ISSET(other_sock, &readfds)) {
+                int bytes = read(other_sock, buf, sizeof(buf) - 1);
+                if (bytes <= 0) {
+                    send_over_msg(cur_sock,
+                                  current_player,
+                                  g->board,
+                                  "Forfeit");
+                    close(cur_sock);
+                    close(other_sock);
+                    return;
+                }
+                buf[bytes] = '\0';
+
+                if (check_framing_errors(buf, bytes) != 0) {
+                    send_fail_msg(other_sock, "10 Invalid");
+                    send_over_msg(cur_sock,
+                                  current_player,
+                                  g->board,
+                                  "Forfeit");
+                    close(cur_sock);
+                    close(other_sock);
+                    return;
+                }
+
+                char temp[256];
+                char *msg[6];
+                char token_storage[10][256];
+                strcpy(temp, buf);
+                parse_msg(temp, msg, token_storage, 6);
+
+                if (strcmp(msg[2], "MOVE") == 0) {
+                    send_fail_msg(other_sock, "31 Impatient");
+                    continue;
+                } else {
+                    send_fail_msg(other_sock, "10 Invalid");
+                    send_over_msg(cur_sock,
+                                  current_player,
+                                  g->board,
+                                  "Forfeit");
+                    close(cur_sock);
+                    close(other_sock);
+                    return;
+                }
+            }
+
+            if (FD_ISSET(cur_sock, &readfds)) {
+                int bytes = read(cur_sock, buf, sizeof(buf) - 1);
+                if (bytes <= 0) {
+
+                    fprintf(stderr, "Player %d disconnected, forfeit\n", current_player);
+                    send_over_msg(other_sock,
+                                  (current_player == 1) ? 2 : 1,
+                                  g->board,
+                                  "Forfeit");
+                    close(cur_sock);
+                    close(other_sock);
+                    return;
+                }
+                buf[bytes] = '\0';
+
+                if (check_framing_errors(buf, bytes) != 0) {
+                    send_fail_msg(cur_sock, "10 Invalid");
+                    send_over_msg(other_sock,
+                                  (current_player == 1) ? 2 : 1,
+                                  g->board,
+                                  "Forfeit");
+                    close(cur_sock);
+                    close(other_sock);
+                    return;
+                }
+
+                char temp[256];
+                char *msg[6];
+                char token_storage[10][256];
+                strcpy(temp, buf);
+                parse_msg(temp, msg, token_storage, 6);
+
+                if (strcmp(msg[2], "MOVE") != 0) {
+                    if (strcmp(msg[2], "OPEN") == 0) {
+                        send_fail_msg(cur_sock, "23 Already Open");
+                    } else {
+                        send_fail_msg(cur_sock, "10 Invalid");
+                    }
+                    send_over_msg(other_sock,
+                                  (current_player == 1) ? 2 : 1,
+                                  g->board,
+                                  "Forfeit");
+                    close(cur_sock);
+                    close(other_sock);
+                    return;
+                }
+
+                int pile = atoi(msg[3]);  
+                int qty  = atoi(msg[4]);
+
+                if (pile < 0 || pile >= 5) {
+                    send_fail_msg(cur_sock, "32 Pile Index");
+                    continue;   
+                }
+
+                if (qty <= 0 || qty > g->board[pile]) {
+                    send_fail_msg(cur_sock, "33 Quantity");
+                    continue;  
+                }
+
+                g->board[pile] -= qty;
+
+                if (board_all_zero(g->board)) {
+                    int winner = current_player;
+                    send_over_msg(g->player1_socket, winner, g->board, "");
+                    send_over_msg(g->player2_socket, winner, g->board, "");
+                    close(g->player1_socket);
+                    close(g->player2_socket);
+                    return;
+                }
+
+                current_player = (current_player == 1) ? 2 : 1;
+                break;
+            }
+
         }
-        buf[bytes] = '\0';
-
-        if (check_framing_errors(buf, bytes) != 0) {
-            send_fail_msg(cur_sock, "10 Invalid");
-            send_over_msg(other_sock,
-                          (current_player == 1) ? 2 : 1,
-                          g->board,
-                          "Forfeit");
-            close(cur_sock);
-            close(other_sock);
-            return;
-        }
-
-        char temp[256];
-        char *msg[6];
-        char token_storage[10][256];
-
-        strcpy(temp, buf);
-        parse_msg(temp, msg, token_storage, 6);
-
-        if (strcmp(msg[2], "MOVE") != 0) {
-            send_fail_msg(cur_sock, "10 Invalid");
-            send_over_msg(other_sock,
-                          (current_player == 1) ? 2 : 1,
-                          g->board,
-                          "Forfeit");
-            close(cur_sock);
-            close(other_sock);
-            return;
-        }
-
-        int pile = atoi(msg[3]);  
-        int qty  = atoi(msg[4]);
-
-        // Validate pile index (0 to 4)
-        if (pile < 0 || pile >= 5) {
-            send_fail_msg(cur_sock, "32 Pile Index");
-            continue;   
-        }
-
-        // Validate quantity: 1..board[pile]
-        if (qty <= 0 || qty > g->board[pile]) {
-            send_fail_msg(cur_sock, "33 Quantity");
-            continue;   
-        }
-
-        g->board[pile] -= qty;
-
-        if (board_all_zero(g->board)) {
-            int winner = current_player;
-            send_over_msg(g->player1_socket, winner, g->board, "");
-            send_over_msg(g->player2_socket, winner, g->board, "");
-            close(g->player1_socket);
-            close(g->player2_socket);
-            return;
-        }
-
-        current_player = (current_player == 1) ? 2 : 1;
-    }
+    } 
 }
-
 
 int main(int argc, char **argv)
 {
@@ -355,11 +427,16 @@ int main(int argc, char **argv)
 
         if (strcmp(msg[2], "OPEN") != 0) 
         {
-            send_fail_msg(client_socket, "10 Invalid");
+            if (strcmp(msg[2], "MOVE") == 0) {
+                send_fail_msg(client_socket, "24 Not Playing");
+            } else {
+                send_fail_msg(client_socket, "10 Invalid");
+            }
 
             close(client_socket);
             continue;
         }
+
 
         if (!validate_name(clients, num_clients, client_socket, msg[3])) 
         {
