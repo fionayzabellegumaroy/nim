@@ -45,7 +45,7 @@ void print_parsed_msg(char *msg[], int count)
 // will this call ever fail? if so, change to int return type
 void send_fail_msg(int socket_fd, char *reason)
 {
-    char msg[256];
+    char msg[4096];
     int msg_len = 6 + strlen(reason);
     snprintf(msg, sizeof(msg), "0|%02d|FAIL|%s|", msg_len, reason);
     write(socket_fd, msg, strlen(msg));
@@ -73,18 +73,20 @@ void send_wait_msg(int socket_fd)
 }
 
 int send_over_msg(int socket_fd, int winner, int board[5], const char *reason) {
-    char msg[256];
-
     char board_str[64];
     snprintf(board_str, sizeof(board_str),
              "%d %d %d %d %d",
              board[0], board[1], board[2], board[3], board[4]);
 
-    char body[256];
+    char body[4096];
     snprintf(body, sizeof(body), "OVER|%d|%s|%s|", winner, board_str, reason ? reason : "");
 
     int body_len = (int)strlen(body);
+
+    int msg_size = 5 + body_len + 1;
+    char msg[msg_size];
     snprintf(msg, sizeof(msg), "0|%02d|%s", body_len, body);
+
 
     fprintf(stdout, "Sending OVER message: %s\n", msg);
 

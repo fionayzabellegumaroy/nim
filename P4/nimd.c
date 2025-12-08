@@ -19,15 +19,18 @@
 game_instance games[MAX_GAMES];
 client clients[MAX_CLIENTS];
 
-char buf[256]; // max msg should be 104; but will allocate more just in case of incorrect msg formatting
-char *modified[104];
+char buf[4096]; // max msg should be 104; but will allocate more just in case of incorrect msg formatting
+char *modified[4096];
 
 static int num_clients = 0;
 static int num_games = 0;
 
-static int board_all_zero(int board[5]) {
-    for (int i = 0; i < 5; i++) {
-        if (board[i] != 0) return 0;
+static int board_all_zero(int board[5])
+{
+    for (int i = 0; i < 5; i++)
+    {
+        if (board[i] != 0)
+            return 0;
     }
     return 1;
 }
@@ -95,7 +98,7 @@ int check_framing_errors(char buf[], int received_length)
 }
 
 // function to parse through message
-void parse_msg(char buf[], char *msg[], char token_storage[][256], int max_tokens)
+void parse_msg(char buf[], char *msg[], char token_storage[][4096], int max_tokens)
 {
     char *token;
     int count = 0;
@@ -114,42 +117,44 @@ void parse_msg(char buf[], char *msg[], char token_storage[][256], int max_token
     return;
 }
 
-int send_name_msg(int socket_fd, int player_num, const char *opponent_name) {
-    char msg[256];
-
-    char body[256];
+int send_name_msg(int socket_fd, int player_num, const char *opponent_name)
+{
+    char body[4096];
     snprintf(body, sizeof(body), "NAME|%d|%s|", player_num, opponent_name);
 
-    int body_len = (int)strlen(body);         
-    snprintf(msg, sizeof(msg), "0|%02d|%s", body_len, body);
+    int body_len = (int)strlen(body);
+    int msg_size = 5 + body_len + 1;
+    char msg[msg_size];
 
+    snprintf(msg, sizeof(msg), "0|%02d|%s", body_len, body);
     fprintf(stdout, "Sending NAME message: %s\n", msg);
 
     size_t len = strlen(msg);
-    write(socket_fd, msg, len);   
-    write(socket_fd, "\n", 1); 
+    write(socket_fd, msg, len);
+    write(socket_fd, "\n", 1);
 
     return (int)len;
 }
 
-int send_play_state(int socket_fd, int next_player, int board[5]) {
-    char msg[256];
-
+int send_play_state(int socket_fd, int next_player, int board[5])
+{
     char board_str[64];
     snprintf(board_str, sizeof(board_str),
              "%d %d %d %d %d",
              board[0], board[1], board[2], board[3], board[4]);
 
-    char body[256];
+    char body[4096];
     snprintf(body, sizeof(body), "PLAY|%d|%s|", next_player, board_str);
 
     int body_len = (int)strlen(body);
+    int msg_size = 5 + body_len + 1;
+    char msg[msg_size];
     snprintf(msg, sizeof(msg), "0|%02d|%s", body_len, body);
 
-    fprintf(stdout, "Sending PLAY message: %s\n", msg); 
+    fprintf(stdout, "Sending PLAY message: %s\n", msg);
 
     size_t len = strlen(msg);
-    write(socket_fd, msg, len); 
+    write(socket_fd, msg, len);
     write(socket_fd, "\n", 1);
 
     return (int)len;
@@ -223,16 +228,18 @@ void run_game(game_instance *g)
 {
     int current_player = g->current_turn;
 
-    while (1) {
+    while (1)
+    {
         int p1 = g->player1_socket;
         int p2 = g->player2_socket;
-        int cur_sock   = (current_player == 1) ? p1 : p2;
+        int cur_sock = (current_player == 1) ? p1 : p2;
         int other_sock = (current_player == 1) ? p2 : p1;
 
         send_play_state(p1, current_player, g->board);
         send_play_state(p2, current_player, g->board);
 
-        while (1) {
+        while (1)
+        {
             fd_set readfds;
             FD_ZERO(&readfds);
             FD_SET(cur_sock, &readfds);
@@ -240,7 +247,8 @@ void run_game(game_instance *g)
             int maxfd = (p1 > p2 ? p1 : p2) + 1;
 
             int ready = select(maxfd, &readfds, NULL, NULL, NULL);
-            if (ready < 0) {
+            if (ready < 0)
+            {
                 perror("select");
                 send_over_msg(p1, 0, g->board, "Forfeit");
                 send_over_msg(p2, 0, g->board, "Forfeit");
@@ -249,9 +257,11 @@ void run_game(game_instance *g)
                 return;
             }
 
-            if (FD_ISSET(other_sock, &readfds)) {
+            if (FD_ISSET(other_sock, &readfds))
+            {
                 int bytes = read(other_sock, buf, sizeof(buf) - 1);
-                if (bytes <= 0) {
+                if (bytes <= 0)
+                {
                     send_over_msg(cur_sock,
                                   current_player,
                                   g->board,
@@ -262,7 +272,8 @@ void run_game(game_instance *g)
                 }
                 buf[bytes] = '\0';
 
-                if (check_framing_errors(buf, bytes) != 0) {
+                if (check_framing_errors(buf, bytes) != 0)
+                {
                     send_fail_msg(other_sock, "10 Invalid");
                     send_over_msg(cur_sock,
                                   current_player,
@@ -273,16 +284,19 @@ void run_game(game_instance *g)
                     return;
                 }
 
-                char temp[256];
+                char temp[4096];
                 char *msg[6];
-                char token_storage[10][256];
+                char token_storage[10][4096];
                 strcpy(temp, buf);
                 parse_msg(temp, msg, token_storage, 6);
 
-                if (strcmp(msg[2], "MOVE") == 0) {
+                if (strcmp(msg[2], "MOVE") == 0)
+                {
                     send_fail_msg(other_sock, "31 Impatient");
                     continue;
-                } else {
+                }
+                else
+                {
                     send_fail_msg(other_sock, "10 Invalid");
                     send_over_msg(cur_sock,
                                   current_player,
@@ -294,9 +308,11 @@ void run_game(game_instance *g)
                 }
             }
 
-            if (FD_ISSET(cur_sock, &readfds)) {
+            if (FD_ISSET(cur_sock, &readfds))
+            {
                 int bytes = read(cur_sock, buf, sizeof(buf) - 1);
-                if (bytes <= 0) {
+                if (bytes <= 0)
+                {
 
                     fprintf(stderr, "Player %d disconnected, forfeit\n", current_player);
                     send_over_msg(other_sock,
@@ -309,7 +325,8 @@ void run_game(game_instance *g)
                 }
                 buf[bytes] = '\0';
 
-                if (check_framing_errors(buf, bytes) != 0) {
+                if (check_framing_errors(buf, bytes) != 0)
+                {
                     send_fail_msg(cur_sock, "10 Invalid");
                     send_over_msg(other_sock,
                                   (current_player == 1) ? 2 : 1,
@@ -320,16 +337,20 @@ void run_game(game_instance *g)
                     return;
                 }
 
-                char temp[256];
+                char temp[4096];
                 char *msg[6];
-                char token_storage[10][256];
+                char token_storage[10][4096];
                 strcpy(temp, buf);
                 parse_msg(temp, msg, token_storage, 6);
 
-                if (strcmp(msg[2], "MOVE") != 0) {
-                    if (strcmp(msg[2], "OPEN") == 0) {
+                if (strcmp(msg[2], "MOVE") != 0)
+                {
+                    if (strcmp(msg[2], "OPEN") == 0)
+                    {
                         send_fail_msg(cur_sock, "23 Already Open");
-                    } else {
+                    }
+                    else
+                    {
                         send_fail_msg(cur_sock, "10 Invalid");
                     }
                     send_over_msg(other_sock,
@@ -341,22 +362,25 @@ void run_game(game_instance *g)
                     return;
                 }
 
-                int pile = atoi(msg[3]);  
-                int qty  = atoi(msg[4]);
+                int pile = atoi(msg[3]);
+                int qty = atoi(msg[4]);
 
-                if (pile < 0 || pile >= 5) {
+                if (pile < 0 || pile >= 5)
+                {
                     send_fail_msg(cur_sock, "32 Pile Index");
-                    continue;   
+                    continue;
                 }
 
-                if (qty <= 0 || qty > g->board[pile]) {
+                if (qty <= 0 || qty > g->board[pile])
+                {
                     send_fail_msg(cur_sock, "33 Quantity");
-                    continue;  
+                    continue;
                 }
 
                 g->board[pile] -= qty;
 
-                if (board_all_zero(g->board)) {
+                if (board_all_zero(g->board))
+                {
                     int winner = current_player;
                     send_over_msg(g->player1_socket, winner, g->board, "");
                     send_over_msg(g->player2_socket, winner, g->board, "");
@@ -368,9 +392,8 @@ void run_game(game_instance *g)
                 current_player = (current_player == 1) ? 2 : 1;
                 break;
             }
-
         }
-    } 
+    }
 }
 
 int main(int argc, char **argv)
@@ -395,7 +418,9 @@ int main(int argc, char **argv)
     while (1)
     {
         int status;
-        while (waitpid(-1, &status, WNOHANG) > 0) { }
+        while (waitpid(-1, &status, WNOHANG) > 0)
+        {
+        }
 
         int client_socket = accept(listener_socket, NULL, NULL);
         if (client_socket < 0)
@@ -407,32 +432,37 @@ int main(int argc, char **argv)
         fprintf(stdout, "Client %d connected\n", client_socket);
 
         int bytes = read(client_socket, buf, 255);
-        if (bytes <= 0) {
+        if (bytes <= 0)
+        {
             fprintf(stderr, "Client disconnected before sending OPEN\n");
             close(client_socket);
             continue;
         }
         buf[bytes] = '\0';
 
-        if (check_framing_errors(buf, bytes) != 0) {
+        if (check_framing_errors(buf, bytes) != 0)
+        {
             send_fail_msg(client_socket, "10 Invalid");
 
             close(client_socket);
             continue;
         }
 
-        char temp[256];
+        char temp[4096];
         char *msg[5];
-        char token_storage[10][256];
+        char token_storage[10][4096];
 
         strcpy(temp, buf);
         parse_msg(temp, msg, token_storage, 5);
 
-        if (strcmp(msg[2], "OPEN") != 0) 
+        if (strcmp(msg[2], "OPEN") != 0)
         {
-            if (strcmp(msg[2], "MOVE") == 0) {
+            if (strcmp(msg[2], "MOVE") == 0)
+            {
                 send_fail_msg(client_socket, "24 Not Playing");
-            } else {
+            }
+            else
+            {
                 send_fail_msg(client_socket, "10 Invalid");
             }
 
@@ -440,8 +470,7 @@ int main(int argc, char **argv)
             continue;
         }
 
-
-        if (!validate_name(clients, num_clients, client_socket, msg[3])) 
+        if (!validate_name(clients, num_clients, client_socket, msg[3]))
         {
             close(client_socket);
             continue;
@@ -459,25 +488,27 @@ int main(int argc, char **argv)
         clients[num_clients] = new_client;
         num_clients++;
 
-        if (num_waiting_players(clients, num_clients) >= 2) 
+        if (num_waiting_players(clients, num_clients) >= 2)
         {
             int game_id = find_and_start_game(clients, num_clients, games, &num_games);
-            
-            if (game_id != -1) 
+
+            if (game_id != -1)
             {
                 game_instance *g = &games[game_id];
 
                 pid_t pid = fork();
-                if (pid < 0) {
+                if (pid < 0)
+                {
                     perror("fork");
 
                     send_fail_msg(g->player1_socket, "10 Invalid");
                     send_fail_msg(g->player2_socket, "10 Invalid");
-                    
+
                     close(g->player1_socket);
                     close(g->player2_socket);
-                } 
-                else if (pid == 0) {
+                }
+                else if (pid == 0)
+                {
                     close(listener_socket);
 
                     send_name_msg(g->player1_socket, 1, g->player2_name);
@@ -486,14 +517,15 @@ int main(int argc, char **argv)
                     run_game(g);
 
                     exit(0);
-                } 
-                else {
+                }
+                else
+                {
                     close(g->player1_socket);
                     close(g->player2_socket);
 
-                    for (int i = 0; i < num_clients; i++) 
+                    for (int i = 0; i < num_clients; i++)
                     {
-                        if (clients[i].game_id == g->game_id) 
+                        if (clients[i].game_id == g->game_id)
                         {
                             clients[i] = clients[num_clients - 1];
 
