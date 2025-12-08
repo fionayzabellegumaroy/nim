@@ -394,6 +394,9 @@ int main(int argc, char **argv)
 
     while (1)
     {
+        int status;
+        while (waitpid(-1, &status, WNOHANG) > 0) { }
+
         int client_socket = accept(listener_socket, NULL, NULL);
         if (client_socket < 0)
         {
@@ -463,14 +466,42 @@ int main(int argc, char **argv)
             if (game_id != -1) 
             {
                 game_instance *g = &games[game_id];
-                
-                send_name_msg(g->player1_socket, 1, g->player2_name);
-                send_name_msg(g->player2_socket, 2, g->player1_name);
 
-                run_game(g);
+                pid_t pid = fork();
+                if (pid < 0) {
+                    perror("fork");
 
-                num_clients = 0;
-                num_games = 0;
+                    send_fail_msg(g->player1_socket, "10 Invalid");
+                    send_fail_msg(g->player2_socket, "10 Invalid");
+                    
+                    close(g->player1_socket);
+                    close(g->player2_socket);
+                } 
+                else if (pid == 0) {
+                    close(listener_socket);
+
+                    send_name_msg(g->player1_socket, 1, g->player2_name);
+                    send_name_msg(g->player2_socket, 2, g->player1_name);
+
+                    run_game(g);
+
+                    exit(0);
+                } 
+                else {
+                    close(g->player1_socket);
+                    close(g->player2_socket);
+
+                    for (int i = 0; i < num_clients; i++) 
+                    {
+                        if (clients[i].game_id == g->game_id) 
+                        {
+                            clients[i] = clients[num_clients - 1];
+
+                            num_clients--;
+                            i--;
+                        }
+                    }
+                }
             }
         }
     }
