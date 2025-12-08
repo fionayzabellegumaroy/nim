@@ -9,7 +9,7 @@ PBUF = clients/src/pbuf.h # remove later
 CLIENTS = clients/src/
 
 # gets all tests 
-TESTS := $(filter-out tests/helper.c tests/runTests.c, $(wildcard tests/*.c))
+TESTS := $(wildcard tests/*.c)
 
 TEST_OUTPUTS := $(patsubst tests/%.c, $(BUILD_FOLDER)/%, $(TESTS))
 
