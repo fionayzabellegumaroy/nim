@@ -22,8 +22,8 @@ client clients[MAX_CLIENTS];
 char buf[256]; // max msg should be 104; but will allocate more just in case of incorrect msg formatting
 char *modified[104];
 
-int num_clients = 0;
-int num_games = 0;
+static int num_clients = 0;
+static int num_games = 0;
 
 static int board_all_zero(int board[5]) {
     for (int i = 0; i < 5; i++) {

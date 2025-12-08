@@ -9,37 +9,66 @@ netID: fag46
 ## System Design:
 
 ### Data structures:
-1. struct message defines the required field needed in a NGP message (version, length, and type).
-2. enum client_state defines whether a client is connected, waiting, playing, or disconnected
-3. struct game_instance defines the names of both player one and player two, the sockets of both players, the board state using an int array, and the current player. 
-4. struct client defines the socket file descriptor, name, state, and the game id (when/if we choose to implement multiple games systems)
-    a. game id = -1 if not in a game yet
+1. struct message 
+    - Defines the fields used in an NGP message (version, length, type).
+2. enum client_state 
+    - Tracks whether a client is:
+        - CONNECTED
+        - WAITING
+        - PLAYING
+        - DISCONNECTED
+    - Lets the server quickly find players available to match.
+3. struct client
+    - Stores the client's socket FD, name, current state, and game_id.
+    - game_id = -1 indicates the client is not currently in a game.
+    - All clients are tracked in a global clients[] array with num_clients.
+4. struct game_instance 
+    - Stores both player names, both sockets, and the current board state.
+    - Board represented as an array of 5 integers initialized to [1,3,5,7,9]. 
+    - Stores which player's turn it is and the assigned game_id.
+    - Games are tracked in games[] with num_games.
+5. Buffer
+    - A shared buf is used for receiving raw message bytes.
+    - Token arrays hold pointers after splitting the input by |.
 
 ### Design:
-1. Set up server that has one listening socket
-2. Each client gets their own socket FD (which will be tracked with client struct)
-3. Once there are 2 available clients in clients[], match them to a game
-4. Once a game starts, will utilize helper functions to send our messages and parse through the messages (i.e. int send_play_msg(int socket, int turn, int[] board) and int parse_move_msg(char *buffer, char *name) [ able to do char *name since names are unique, or we could also keep track giving a client struct idk])
-5. and so on? 
-
-thoughts: if we decide to work on multiple games, to decide who to match, we just grab the earliest waiting clients
+1. Server begins by creating a single listening socket using open_listener.
+2. Each new client connection receives its own socket FD, stored in a client struct.
+3. Server expects the first valid message to be an OPEN request.
+    - If invalid, server sends FAIL and closes the socket.
+4. Name validation ensures the player name is unique and within length limits.
+5. Valid clients are placed in WAITING state and sent a WAIT message.
+6. When at least two clients are waiting, the server:
+    - Selects the first two WAITING clients.
+    - Creates a new game_instance, initializes board, assigns game_id.
+    - Updates both clients’ states to PLAYING.
+7. A new child process is forked to run the game:
+    - Child handles all gameplay and communication for that match.
+    - Parent removes those clients from the waiting list and continues accepting new clients.
+8. Child sends initial NAME messages to both players, identifying player numbers.
+9. All helper operations (send WAIT, FAIL, NAME, OVER, parsing, board logic) are delegated to functions in helper.c and pbuf.
 
 ### Game Flow:
-1. Client1 connects and sends: 0|16|OPEN|alice| (assuming "alice" is the name)
-2. Server responds to client1: 0|05|WAIT|
-3. Client2 connects and sends: 0|14|OPEN|bob|
-4. Server responds to client2: 0|05|WAIT|
-
-__Game Start:__ 
-Server sends to client1: 0|17|NAME|1|bob| 
-Server sends to client2: 0|19|NAME|2|alice|
-
-__Game Flow:__
-Server sends both clients the same PLAY message: 0|17|PLAY|1|1 3 5 7 9| 
-Player 1 should respond with MOVE
-Server updates board and sends new PLAY to both clients with updated state and next player number
-Player 2 should respond with MOVE
-Process repeats
+1. Child process begins the match by sending:
+    - NAME message to both players containing their player number and opponent name.
+    - Initial PLAY message containing player turn + board state.
+2. Game loop (run_game) uses select to monitor both player sockets.
+    - Only the current player is allowed to send MOVE.
+    - Wrong-turn moves result in FAIL|31 Impatient|.
+    - Malformed messages result in FAIL|10 Invalid| and game ends by forfeit.
+    - Disconnects result in immediate forfeit, with an OVER message sent to opponent.
+3. For a valid MOVE:
+    - Server checks pile index; invalid -> FAIL|32 Pile Index|.
+    - Server checks quantity; invalid -> FAIL|33 Quantity|.
+    - Legal moves update the board and continue the game.
+4. If move empties the board:
+    - Current player is winner -> send OVER to both clients with final board.
+   Otherwise:
+    - Turn switches to the other player.
+    - Server sends updated PLAY message to both players.
+5. Game loop continues until:
+    - A player wins by taking the last stones
+    - A player disconnects / violates protocol, causing a forfeit.
 
 ## Tests:
 ### Logic Testing
