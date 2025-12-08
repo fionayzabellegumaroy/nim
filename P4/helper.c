@@ -49,6 +49,8 @@ void send_fail_msg(int socket_fd, char *reason)
     int msg_len = 6 + strlen(reason);
     snprintf(msg, sizeof(msg), "0|%02d|FAIL|%s|", msg_len, reason);
     write(socket_fd, msg, strlen(msg));
+    write(socket_fd, "\n", 1);
+
     return;
 }
 
@@ -60,10 +62,37 @@ int send_play_msg(int socket_fd, int pile, int stones)
 
 void send_wait_msg(int socket_fd)
 {
-    char msg[] = "0|05|WAIT|\n";
+    char msg[] = "0|05|WAIT|";
     printf("Sending wait message: %s\n", msg);
-    write(socket_fd, msg, sizeof(msg));
+
+    size_t len = strlen(msg);
+    write(socket_fd, msg, len);   
+    write(socket_fd, "\n", 1);
+
     return;
+}
+
+int send_over_msg(int socket_fd, int winner, int board[5], const char *reason) {
+    char msg[256];
+
+    char board_str[64];
+    snprintf(board_str, sizeof(board_str),
+             "%d %d %d %d %d",
+             board[0], board[1], board[2], board[3], board[4]);
+
+    char body[256];
+    snprintf(body, sizeof(body), "OVER|%d|%s|%s|", winner, board_str, reason ? reason : "");
+
+    int body_len = (int)strlen(body);
+    snprintf(msg, sizeof(msg), "0|%02d|%s", body_len, body);
+
+    fprintf(stdout, "Sending OVER message: %s\n", msg);
+
+    size_t len = strlen(msg);
+    write(socket_fd, msg, len);   
+    write(socket_fd, "\n", 1);   
+
+    return (int)len;
 }
 
 // helper function to check if message is valid and is terminated within stated length
@@ -95,7 +124,7 @@ int validate_fields(char buf[], int check_length, char *type)
     {
         return 1;
     }
-    else if (strcmp(type, "MOVE") == 0 && field_count == 1 && buf[check_length - 1] == '|')
+    else if (strcmp(type, "MOVE") == 0 && field_count == 3 && buf[check_length - 1] == '|')
     {
         return 1;
     }

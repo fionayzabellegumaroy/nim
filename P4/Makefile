@@ -36,8 +36,11 @@ runTest: all
 
 # run all tests
 runAllTests: all
-	@./$(BUILD_FOLDER)/runTests
-
+	@for t in $(TEST_OUTPUTS); do \
+		echo "Running $$t..."; \
+		$$t; \
+		echo ""; \
+	done
 # remove nimd.o and all built test outputs
 clean:
 	rm -f -rf $(BUILD_FOLDER)/* nimd rawc

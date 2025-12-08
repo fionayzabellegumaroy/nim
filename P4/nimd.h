@@ -43,6 +43,7 @@ void send_fail_msg(int socket_fd, char* reason);
 int send_play_msg(int socket_fd, int pile, int stones);
 void send_wait_msg(int socket_fd);
 int send_name_msg(int socket_fd, int player_num, const char *opponent_name);
+int send_over_msg(int socket_fd, int winner, int board[5], const char *reason);
 
 int send_play_state(int socket_fd, int next_player, int board[5]);
 
