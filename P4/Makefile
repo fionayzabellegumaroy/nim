@@ -13,7 +13,7 @@ TESTS := $(wildcard tests/*.c)
 
 TEST_OUTPUTS := $(patsubst tests/%.c, $(BUILD_FOLDER)/%, $(TESTS))
 
-all: nimd rawc ${TEST_OUTPUTS} 
+all: nimd rawc testc ${TEST_OUTPUTS} 
 
 nimd: nimd.c $(NETWORK) $(PBUF) nimd.h clients/src/network.c helper.c
 	@mkdir -p $(BUILD_FOLDER)
@@ -22,6 +22,11 @@ nimd: nimd.c $(NETWORK) $(PBUF) nimd.h clients/src/network.c helper.c
 # remove rawc later
 rawc: ${CLIENTS}rawc.o ${CLIENTS}pbuf.o ${CLIENTS}network.o
 	$(CC) $(CFLAGS) -o $@ $^
+
+# remove rawc later
+testc: ${CLIENTS}rawc.o ${CLIENTS}pbuf.o ${CLIENTS}network.o
+	$(CC) $(CFLAGS) -o $@ $^
+
 
 # recipe to build each test output
 $(BUILD_FOLDER)/%: tests/%.c
