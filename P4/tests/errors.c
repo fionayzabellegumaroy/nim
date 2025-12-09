@@ -371,7 +371,8 @@ int main(int argc, char *argv[])
     failures += lengthMoreThan104();
     failures += incorrectVersion();
 
-    // failures += extraFields();
+    // failures += incorrectExtraFields();
+    // failures += correctExtraFields();
     // failures += emptyFields();
 
     // session errors
