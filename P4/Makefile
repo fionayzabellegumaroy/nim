@@ -10,7 +10,6 @@ CLIENTS = clients/src/
 
 # gets all tests 
 TESTS := $(wildcard tests/*.c)
-
 TEST_OUTPUTS := $(patsubst tests/%.c, $(BUILD_FOLDER)/%, $(TESTS))
 
 all: nimd rawc testc ${TEST_OUTPUTS} 
@@ -46,6 +45,16 @@ runAllTests: all
 		$$t; \
 		echo ""; \
 	done
+
+# run scripts
+TEST: all
+	@echo "Running format tests..."
+	@chmod +x correctFormat.csh
+	@./correctFormat.csh # end to end test
+	@echo "Tests completed."
+
+.PHONY: TEST
+
 # remove nimd.o and all built test outputs
 clean:
 	rm -f -rf $(BUILD_FOLDER)/* nimd rawc
