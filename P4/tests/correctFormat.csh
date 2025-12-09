@@ -1,7 +1,7 @@
 #!/bin/bash
 # end to end testing for a complete game with no errors or forfeits
 
-PORT=8083
+PORT=8080
 pkill -f nimd 2>/dev/null
 sleep 1
 
@@ -44,6 +44,8 @@ echo "=== Testing Successful Game W/ No Errors ==="
     sleep 7
 } | ./rawc localhost $PORT &
 
-sleep 100  #offset to allow game to finish
+sleep 40  #offset to allow game to finish
 
 kill $SERVER_PID 2>/dev/null
+
+echo "=== Test Completed ==="

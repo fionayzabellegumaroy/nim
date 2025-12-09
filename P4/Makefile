@@ -12,7 +12,7 @@ CLIENTS = clients/src/
 TESTS := $(wildcard tests/*.c)
 TEST_OUTPUTS := $(patsubst tests/%.c, $(BUILD_FOLDER)/%, $(TESTS))
 
-all: nimd rawc testc ${TEST_OUTPUTS} 
+all: nimd rawc ${TEST_OUTPUTS} 
 
 nimd: nimd.c $(NETWORK) $(PBUF) nimd.h clients/src/network.c helper.c
 	@mkdir -p $(BUILD_FOLDER)
@@ -21,11 +21,6 @@ nimd: nimd.c $(NETWORK) $(PBUF) nimd.h clients/src/network.c helper.c
 # remove rawc later
 rawc: ${CLIENTS}rawc.o ${CLIENTS}pbuf.o ${CLIENTS}network.o
 	$(CC) $(CFLAGS) -o $@ $^
-
-# remove rawc later
-testc: ${CLIENTS}rawc.o ${CLIENTS}pbuf.o ${CLIENTS}network.o
-	$(CC) $(CFLAGS) -o $@ $^
-
 
 # recipe to build each test output
 $(BUILD_FOLDER)/%: tests/%.c
@@ -47,13 +42,17 @@ runAllTests: all
 	done
 
 # run scripts
-TEST: all
-	@echo "Running format tests..."
+TESTS: all
 	@chmod +x tests/correctFormat.csh
-	@./tests/correctFormat.csh #end to end test
-	@echo "Tests completed."
-
-.PHONY: TEST
+	@chmod +x tests/multiplayer.csh
+	@chmod +x tests/testOpen.csh	
+	@chmod +x tests/testMove.csh	
+	@./tests/correctFormat.csh
+	@./tests/multiplayer.csh 
+	@./tests/testOpen.csh
+	@./tests/testMove.csh
+	
+.PHONY: TESTS
 
 # remove nimd.o and all built test outputs
 clean:
