@@ -1,6 +1,7 @@
 #!/bin/bash
+# end to end testing for a complete game with no errors or forfeits
 
-PORT=8084
+PORT=8089
 pkill -f nimd 2>/dev/null
 sleep 1
 
@@ -8,26 +9,25 @@ sleep 1
 SERVER_PID=$!
 sleep 3
 
-echo "=== Testing MOVE Message ==="
+echo "=== Testing Program Behavior After Client Sends A Move When Not Their Turn ==="
 
 # Player One Moves
 {
     echo "0|11|OPEN|Jason|"   
-    sleep 7
-    
-    echo "0|09|MOVE|0|1|"    
+    sleep 12
 } | ./rawc localhost $PORT &
 
 # Player Two Moves
 {
     sleep 4
     echo "0|11|OPEN|Fiona|"
-    sleep 7
+    sleep 4
     
     echo "0|09|MOVE|1|1|" 
+    sleep 7
 } | ./rawc localhost $PORT &
 
-sleep 10  #offset to allow game to finish
+sleep 40  #offset to allow game to finish
 
 kill $SERVER_PID 2>/dev/null
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PORT=8084
+PORT=8085
 pkill -f nimd 2>/dev/null
 sleep 1
 
@@ -8,15 +8,13 @@ sleep 1
 SERVER_PID=$!
 sleep 3
 
-echo "=== Testing OPEN Message ==="
+echo "=== Testing unknown Message ==="
 
 # Player One Moves
 {
-    echo "0|11|OPEN|Jason|"   
+    echo "0|11|SLAY|Jason|"   
     sleep 7
-    
-} | ./rawc localhost $PORT 
-
+} | ./rawc localhost $PORT
 sleep 10  #offset to allow game to finish
 
 kill $SERVER_PID 2>/dev/null

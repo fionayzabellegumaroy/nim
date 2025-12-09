@@ -139,7 +139,6 @@ int main(int argc, char *argv[])
 
     failures += noWaiting();
     failures += twoWaiting();
-    // failures += multipleWaiting(); // this may not be doable rn since we're only doing one game rn
     failures += mixedStates();
 
     printf("\n========================================\n");
@@ -147,6 +146,5 @@ int main(int argc, char *argv[])
     printf("  Passed: %d/%d\n", 3 - failures, 3);
     printf("========================================\n");
 
-    // return number of failures (0 = all passed)
     return failures;
 }

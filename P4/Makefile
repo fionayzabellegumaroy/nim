@@ -47,10 +47,29 @@ TESTS: all
 	@chmod +x tests/multiplayer.csh
 	@chmod +x tests/testOpen.csh	
 	@chmod +x tests/testMove.csh	
+	@chmod +x tests/testFail.csh	
+	@chmod +x tests/testUnknown.csh	
+	@chmod +x tests/sessionOne.csh	
+	@chmod +x tests/sessionTwo.csh	
+	@chmod +x tests/doubleOpen.csh	
+	@chmod +x tests/moveBeforeName.csh	
+	@chmod +x tests/moveNotTurn.csh	
+	@chmod +x tests/notAllowedMovePileIndex.csh	
+	@chmod +x tests/notAllowedMoveQuantity.csh	
 	@./tests/correctFormat.csh
 	@./tests/multiplayer.csh 
 	@./tests/testOpen.csh
 	@./tests/testMove.csh
+	@./tests/testFail.csh
+	@./tests/testUnknown.csh
+	@./tests/sessionOne.csh
+	@./tests/sessionTwo.csh
+	@./tests/doubleOpen.csh
+	@./tests/moveBeforeName.csh
+	@./tests/moveNotTurn.csh
+	@./tests/notAllowedMovePileIndex.csh
+	@./tests/notAllowedMoveQuantity.csh
+
 	
 .PHONY: TESTS
 

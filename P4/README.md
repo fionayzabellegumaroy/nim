@@ -8,7 +8,10 @@ netID: fag46
 
 ## Instructions:
 ### MakeFile:
+To run all tests created with a c file, run command in terminal: __"make runAllTests".__
 
+To run all tests created with scripts to test end to end, and others, run command in terminal: __"make TESTS"__
+___
 ### Other:
 To change the max games and players of the server, just change it in nimd.c, under MAX_CLIENTS and MAX_GAMES.
 

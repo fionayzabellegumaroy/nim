@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PORT=8084
+PORT=8086
 pkill -f nimd 2>/dev/null
 sleep 1
 
@@ -8,9 +8,8 @@ sleep 1
 SERVER_PID=$!
 sleep 3
 
-echo "=== Testing OPEN Message ==="
+echo "=== Testing Program Behavior After Client Disconnects Before Being Placed In A Game ==="
 
-# Player One Moves
 {
     echo "0|11|OPEN|Jason|"   
     sleep 7
