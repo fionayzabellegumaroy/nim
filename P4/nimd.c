@@ -12,9 +12,8 @@
 #include <sys/time.h>
 #include "nimd.h"
 
-// might need to do realloc later if we have more clients/games than expected
-#define MAX_CLIENTS 10 // arbitrary for now
-#define MAX_GAMES 10   // arbitrary for now
+#define MAX_CLIENTS 10 
+#define MAX_GAMES 10   
 
 game_instance games[MAX_GAMES];
 client clients[MAX_CLIENTS];

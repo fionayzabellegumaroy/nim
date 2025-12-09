@@ -6,6 +6,14 @@ netID: jc3003
 name: Fiona Yzabelle Gumaroy
 netID: fag46
 
+## Instructions:
+### MakeFile:
+
+### Other:
+To change the max games and players of the server, just change it in nimd.c, under MAX_CLIENTS and MAX_GAMES.
+
+___
+
 ## System Design:
 
 ### Data structures:
@@ -73,16 +81,17 @@ netID: fag46
 ## Tests:
 ### Logic Testing
 __Requirement:__
-This will test one game flow to see if everything actually works
+This will test game flows for end to end testing.
+
 __Detection method:__
+This test program will be utilizing a script to run an end to end test. If the script prints out "Socket EOF or error" at the end of it and there are no errors messaged out, it is a success. If not, it means that there is an error (successfully printing out the error the way we want).
 
 __Test:__
-1. correctFormat():
-2. protocolError():
-3. sessionError():
-4. framingErrors():
-5. multiplayer():
+__Important to Note: If listener socket cannot be binded to, go to script itself and change the port #, signified by "PORT="__
 
+1. correctFormat.csh: This script is an end to end test that is a successful game between two players (Fiona and Jason). The inputs are in the script "correctFormat.csh" [to avoid overclumping the readme, view it there if needed]. The test program should end with a "Socket EOF or error" since there are no more inputs, which signifies a success!
+
+2. multiplayer(): This script is an end to end test that has three games running to test the multiplayer aspect of the program [3 will act as our mini stress test :)]. The inputs are in the "multiplayer.csh" [to avoid overclumping the readme, view it there if needed]. The test program should end with a "Socket EOF or error" since there are no more inputs, which signifies a success!
 ___
 
 __Requirement:__
@@ -99,6 +108,8 @@ __Test:__
 3. multipleWaiting(): clients[] will have 8 WAITING players to test function's capability to start multiple games [idk if this is necessarily needed; might be tested under the multiple players requirement] and test if function will give game IDs sequentially.
 
 4. mixedStates() clients[] will have a variety of states: 3 WAITING, 2 CONNECTED, and 2 PLAYING. This test will test function's capability of only setting up a game given there is a variety of states in clients[].
+
+___
 
 ### Protocol
 __Requirement:__ 
@@ -125,6 +136,7 @@ __Detection method:__
 tbd but maybe we put into an array the clients' message flow and sees if correct flow, and same could be for server hmm
 
 __Test:__
+___
 
 ### Errors Conditions
 __Requirement:__ 
@@ -137,6 +149,7 @@ __Test:__
 1. sessionOne(): Test if program correctly handles behavior of client disconnecting before being placed in a game.
 
 2. sessionTwo() Test if program correctly handles behavior of client disconnecting during a game -> forfeit. 
+___
 
 __Requirement:__ 
 Program correctly detects any protocol errors.
@@ -160,7 +173,7 @@ __Test:__
 7. notAllowedMovePileIndex():  Test if program correctly handles behavior of client sending a move that is not allowed, specifically incorrect pile index, (server should respond with FAIL and message code 32 Pile Index and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
 
 8. notAllowedMoveQuantity():  Test if program correctly handles behavior of client sending a move that is not allowed, specifically incorrect quantity, (server should respond with FAIL and message code 33 Quantity and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
-
+___
 
 __Requirement:__ 
 check_framing_errors() ensures that the message is correctly formatted as stated in the writeup.
@@ -186,6 +199,7 @@ __Test:__
 8. extraFields():
 
 9. emptyFields(): 
+___
 
 ### Other
 1. argv is not 2
@@ -198,12 +212,14 @@ __Detection method:__
 __Test:__
 
 ## Questions For Project:
-1. Do we delete clients folder before submission?
-    If so, need to delete all references of it from nimd.h, Makefile, and maybe a few more
-2. If due to a presentation error that leads to closing a connection, does that mean it technically counts as a forfeit?
-3. If player sends OPEN more than once but during a play, we close both connections?
+2. If due to a presentation error that leads to closing a connection, does that mean it technically counts as a forfeit? [test]
+3. If player sends OPEN more than once but during a play, we close both connections? [test]
 4. Writeup says that client can send FAIL, but doesn't specify how server should handle it. We can maybe close the socket id OR we log that fail and then continue on.
 5. Where do we want to check if version is 0? I currently have it under framing errors
 6. Do we want to treat client giving server type messages as a framing error (rn i put it as is)
 7. How do we want to deal with empty fields like "0|15|OPEN|ALICE||" and extra fields [ im thinking we can deem this as an error ]
 8. Spec says,"client sending OPEN with a name already used by a player in an on-going game" is an error, but doesn't this imply that if a player is WAITING or CONNECTED we can use that name? I kind of don't like that, but idk if that is a design choice we can make.   
+
+
+extra fields: test
+alice|

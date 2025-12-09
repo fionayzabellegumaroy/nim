@@ -49,8 +49,8 @@ runAllTests: all
 # run scripts
 TEST: all
 	@echo "Running format tests..."
-	@chmod +x correctFormat.csh
-	@./correctFormat.csh # end to end test
+	@chmod +x tests/correctFormat.csh
+	@./tests/correctFormat.csh #end to end test
 	@echo "Tests completed."
 
 .PHONY: TEST
