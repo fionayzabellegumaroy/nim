@@ -91,14 +91,14 @@ __Important to Note: If listener socket cannot be binded to, go to script itself
 
 1. correctFormat.csh: This script is an end to end test that is a successful game between two players (Fiona and Jason). The inputs are in the script "correctFormat.csh" [to avoid overclumping the readme, view it there if needed]. The test program should end with a "Socket EOF or error" since there are no more inputs, which signifies a success!
 
-2. multiplayer(): This script is an end to end test that has three games running to test the multiplayer aspect of the program [3 will act as our mini stress test :)]. The inputs are in the "multiplayer.csh" [to avoid overclumping the readme, view it there if needed]. The test program should end with a "Socket EOF or error" since there are no more inputs, which signifies a success!
+2. multiplayer(): This script is an end to end test that has three games that will start to test the multiplayer connection aspect of the program [3 will act as our mini stress test :)]. The inputs are in the "multiplayer.csh" [to avoid overclumping the readme, view it there if needed]. The test program should end with a "Socket EOF or error" since there are no more inputs, which signifies a success! Note: It will not specifically test full games with their own specific movesets since it that involves a more complicated test, and we already tested that the program runs a full game successfully. 
 ___
 
 __Requirement:__
 find_and_start_game() starts a game for two players given there are 2 WAITING players in the server [ or not if there are not at least 2 ]
 
 __Detection method:__
-Given a clients array, amongst other parameters, to pipe through find_and_start_game(), the function returns a unique game id on success or -1 on failure. 
+This is a unit test: Given a clients array, amongst other parameters, to pipe through find_and_start_game(), the function returns a unique game id on success or -1 on failure. 
 
 __Test:__
 1. noWaiting(): clients[] will have two CONNECTED players to test function's capability to determine if a game can be started or not. This function should return -1 since there are no WAITING players. 
@@ -116,26 +116,17 @@ __Requirement:__
 Program correctly responds to all message types.
 
 __Detection method:__ 
-tbd
+Test program utilizes a script that includes the following moves: OPEN message, MOVE message, FAIL message, and an unknown [not a type that is specified in the writeup] message. There will be statements printed out so we can detect if program correctly responds to all messages.
 
 __Test:__
-1. testOpen():
+1. testOpen(): The script will have an input that just includes "0|11|OPEN|JASON" to test how program deciphers an OPEN messsage. The program should send a WAIT message to the client. 
 
-2. testMove():
+2. testMove(): The script will have an input that just includes an OPEN message and "0|09|MOVE|3|5|" to test how program deciphers an MOVE messsage. The program should send updated PLAY messages to the clients. 
 
 3. testFail():
 
 4. testUnknown():
 
-___
-
-__Requirement:__  [idk about this one]
-There is a correct message flow. tbd [might not need to test this tbh]
-
-__Detection method:__ 
-tbd but maybe we put into an array the clients' message flow and sees if correct flow, and same could be for server hmm
-
-__Test:__
 ___
 
 ### Errors Conditions
@@ -199,17 +190,9 @@ __Test:__
 8. extraFields():
 
 9. emptyFields(): 
+
+10. incompleteMessage():
 ___
-
-### Other
-1. argv is not 2
-2. cannot open listening socket
-
-__Requirement:__ 
-
-__Detection method:__ 
-
-__Test:__
 
 ## Questions For Project:
 2. If due to a presentation error that leads to closing a connection, does that mean it technically counts as a forfeit? [test]
