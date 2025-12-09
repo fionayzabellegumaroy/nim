@@ -78,6 +78,9 @@ ___
     - A player wins by taking the last stones
     - A player disconnects / violates protocol, causing a forfeit.
 
+### Other:
+1. We interpreted double open error to occur only after server processes another player connects; not in the same client terminal (if that makes sense).
+
 ## Tests:
 ### Logic Testing
 __Requirement:__
@@ -123,9 +126,9 @@ __Test:__
 
 2. testMove(): The script will have an input that just includes an OPEN message and "0|09|MOVE|3|5|" to test how program deciphers an MOVE messsage. The program should send updated PLAY messages to the clients. 
 
-3. testFail():
+3. testFail(): The script will have an input that just includes a FAIL message and "0|24|FAIL|22 Already Playing|" to test how program deciphers an MOVE messsage. The program should just quietly exit.
 
-4. testUnknown():
+4. testUnknown(): The script will have an input that that just includes "0|09|SLAY|3|5|" to test how program deciphers an unknown messsage. The program should send a FAIL message to the client. 
 
 ___
 
@@ -134,43 +137,42 @@ __Requirement:__
 Program correctly detects any session errors.
 
 __Detection method:__ 
-Tests will utilize printing out the status to reflect whether the program correctly fails given a protocol error, or not. 
+Test programs will utilize a script and the messages sent to client will reflect whether the program correctly fails given a protocol error, or not. 
 
 __Test:__
-1. sessionOne(): Test if program correctly handles behavior of client disconnecting before being placed in a game.
+1. sessionOne(): Test if program correctly handles behavior of client disconnecting before being placed in a game. It should print out an exiting.
 
-2. sessionTwo() Test if program correctly handles behavior of client disconnecting during a game -> forfeit. 
+2. sessionTwo() Test if program correctly handles behavior of client disconnecting during a game -> forfeit. It should print out a forfeit message, leading the other player to win.
 ___
 
 __Requirement:__ 
 Program correctly detects any protocol errors.
 
 __Detection method:__ 
-Tests will utilize printing out the status to reflect whether the program correctly fails given a protocol error, or not. 
+Tests will utilize printing out the status to reflect whether the program correctly fails given a protocol error, or not. Or, it will run a script, and the messages sent to client will reflect whether the program correctly fails given a protocol error, or not. 
+
 
 __Test:__
 1. longName(): Test if program correctly handles behavior of client sending OPEN with a name longer than 72 chars (server should respond with FAIL and message code 21 Long Name and close the connection). To show this, test program will return use validate_name that will return 0 if there's an error and will return 1 if there's no error.
 
 2. alreadyPlaying():  Test if program correctly handles behavior of client sending OPEN with a name already used by a player in an on-going game (server should respond with FAIL and message code 22 Already Playing and close the connection). To show this, test program will return use validate_name that will return 0 if there's an error and will return 1 if there's no error.
 
-3. doubleOpen():  Test if program correctly handles behavior of client sending OPEN a second time (server should respond with FAIL and message code 23 Already Open and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
+3. doubleOpen.csh:  Test if program correctly handles behavior of client sending OPEN a second time (server should respond with FAIL and message code 23 Already Open and close the connection). 
 
-4. moveBeforeWait():  Test if program correctly handles behavior of client sending MOVE before game begin before receiving WAIT (server should respond with FAIL and message code 24 Not Playing and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
+4. moveBeforeWait.csh:  Test if program correctly handles behavior of client sending MOVE before game begin before receiving WAIT (server should respond with FAIL and message code 24 Not Playing and close the connection). 
 
-5. moveBeforeName():  Test if program correctly handles behavior of client sending MOVE before game begin before receiving NAME (server should respond with FAIL and message code 24 Not Playing and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
+5. moveNotTurn.csh:  Test if program correctly handles behavior of client sending MOVE when it is not their turn (server should respond with FAIL and message code 31 Impatient and close the connection). 
 
-6. moveNotTurn():  Test if program correctly handles behavior of client sending MOVE when it is not their turn (server should respond with FAIL and message code 31 Impatient and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
+6. notAllowedMovePileIndex.csh:  Test if program correctly handles behavior of client sending a move that is not allowed, specifically incorrect pile index, (server should respond with FAIL and message code 32 Pile Index and close the connection).
 
-7. notAllowedMovePileIndex():  Test if program correctly handles behavior of client sending a move that is not allowed, specifically incorrect pile index, (server should respond with FAIL and message code 32 Pile Index and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
-
-8. notAllowedMoveQuantity():  Test if program correctly handles behavior of client sending a move that is not allowed, specifically incorrect quantity, (server should respond with FAIL and message code 33 Quantity and close the connection). To show this, test program will initiate a FAIL message with correct code and print out the state of disconnected player [IF WE DECIDE TO KEEP DISCONNECTED STATE]
+7. notAllowedMoveQuantity.csh:  Test if program correctly handles behavior of client sending a move that is not allowed, specifically incorrect quantity, (server should respond with FAIL and message code 33 Quantity and close the connection). 
 ___
 
 __Requirement:__ 
 check_framing_errors() ensures that the message is correctly formatted as stated in the writeup.
 
 __Detection method:__ 
-Given an array of parameters to pipe through check_framing_errors, the function will return -1 if there is a presentation error and 0 if there is none. 
+This is a unit test: given an array of parameters to pipe through check_framing_errors, the function will return -1 if there is a presentation error and 0 if there is none. 
 
 __Test:__
 1. correctFormat(): Input will be "0|11|OPEN|ALICE|" to act as a positive test for the function. Function should return 0, meaning function correctly checks.
@@ -186,23 +188,4 @@ __Test:__
 6. lengthMoreThan104(): Input will be "0|110|...|" to test if function is capable of determining whether entire message length is less than 105 bytes.
  
 7. incorrectVersion(): Input will be "1|11|OPEN|ALICE|" to test if function correctly determines if message only has version 0. Test will return -1 since messages should only have 0 for version. 
-
-8. extraFields():
-
-9. emptyFields(): 
-
-10. incompleteMessage():
 ___
-
-## Questions For Project:
-2. If due to a presentation error that leads to closing a connection, does that mean it technically counts as a forfeit? [test]
-3. If player sends OPEN more than once but during a play, we close both connections? [test]
-4. Writeup says that client can send FAIL, but doesn't specify how server should handle it. We can maybe close the socket id OR we log that fail and then continue on.
-5. Where do we want to check if version is 0? I currently have it under framing errors
-6. Do we want to treat client giving server type messages as a framing error (rn i put it as is)
-7. How do we want to deal with empty fields like "0|15|OPEN|ALICE||" and extra fields [ im thinking we can deem this as an error ]
-8. Spec says,"client sending OPEN with a name already used by a player in an on-going game" is an error, but doesn't this imply that if a player is WAITING or CONNECTED we can use that name? I kind of don't like that, but idk if that is a design choice we can make.   
-
-
-extra fields: test
-alice|
