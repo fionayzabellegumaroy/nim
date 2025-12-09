@@ -397,7 +397,7 @@ void run_game(game_instance *g)
 
 int main(int argc, char **argv)
 {
-    setvbuf(stdout, NULL, _IONBF, 0); // disable buffering for consistent prints
+    setvbuf(stdout, NULL, _IONBF, 0);
 
     if (argc < 2)
     {
@@ -417,104 +417,164 @@ int main(int argc, char **argv)
     while (1)
     {
         int status;
-        while (waitpid(-1, &status, WNOHANG) > 0)
+        while (waitpid(-1, &status, WNOHANG) > 0) {}
+
+        fd_set readfds;
+        FD_ZERO(&readfds);
+        FD_SET(listener_socket, &readfds);
+        int maxfd = listener_socket;
+
+        for (int i = 0; i < num_clients; i++)
         {
+            int fd = clients[i].socket_fd;
+            FD_SET(fd, &readfds);
+            if (fd > maxfd) maxfd = fd;
         }
 
-        int client_socket = accept(listener_socket, NULL, NULL);
-        if (client_socket < 0)
+        int ready = select(maxfd + 1, &readfds, NULL, NULL, NULL);
+        if (ready < 0) continue;
+
+        if (FD_ISSET(listener_socket, &readfds))
         {
-            perror("accept");
-            continue;
+            int client_socket = accept(listener_socket, NULL, NULL);
+            if (client_socket >= 0)
+            {
+                fprintf(stdout, "Client %d connected\n", client_socket);
+
+                int bytes = read(client_socket, buf, 255);
+                if (bytes <= 0)
+                {
+                    close(client_socket);
+                }
+                else
+                {
+                    buf[bytes] = '\0';
+
+                    if (check_framing_errors(buf, bytes) != 0)
+                    {
+                        send_fail_msg(client_socket, "10 Invalid");
+                        close(client_socket);
+                    }
+                    else
+                    {
+                        char temp[4096];
+                        char *msg[5];
+                        char token_storage[10][4096];
+                        strcpy(temp, buf);
+                        parse_msg(temp, msg, token_storage, 5);
+
+                        if (strcmp(msg[2], "OPEN") != 0)
+                        {
+                            if (strcmp(msg[2], "MOVE") == 0)
+                                send_fail_msg(client_socket, "24 Not Playing");
+                            else
+                                send_fail_msg(client_socket, "10 Invalid");
+                            close(client_socket);
+                        }
+                        else
+                        {
+                            if (!validate_name(clients, num_clients, client_socket, msg[3]))
+                            {
+                                close(client_socket);
+                            }
+                            else
+                            {
+                                client new_client;
+                                new_client.socket_fd = client_socket;
+                                new_client.state = WAITING;
+                                new_client.game_id = -1;
+                                strcpy(new_client.name, msg[3]);
+                                send_wait_msg(client_socket);
+                                clients[num_clients] = new_client;
+                                num_clients++;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
-        fprintf(stdout, "Client %d connected\n", client_socket);
-
-        int bytes = read(client_socket, buf, 255);
-        if (bytes <= 0)
+        for (int i = 0; i < num_clients; )
         {
-            fprintf(stderr, "Client disconnected before sending OPEN\n");
-            close(client_socket);
-            continue;
-        }
-        buf[bytes] = '\0';
+            int fd = clients[i].socket_fd;
+            if (!FD_ISSET(fd, &readfds))
+            {
+                i++;
+                continue;
+            }
 
-        if (check_framing_errors(buf, bytes) != 0)
-        {
-            send_fail_msg(client_socket, "10 Invalid");
+            int bytes = read(fd, buf, 255);
+            if (bytes <= 0)
+            {
+                close(fd);
+                clients[i] = clients[num_clients - 1];
+                num_clients--;
+                continue;
+            }
 
-            close(client_socket);
-            continue;
-        }
+            buf[bytes] = '\0';
 
-        char temp[4096];
-        char *msg[5];
-        char token_storage[10][4096];
+            if (check_framing_errors(buf, bytes) != 0)
+            {
+                send_fail_msg(fd, "10 Invalid");
+                close(fd);
+                clients[i] = clients[num_clients - 1];
+                num_clients--;
+                continue;
+            }
 
-        strcpy(temp, buf);
-        parse_msg(temp, msg, token_storage, 5);
+            char temp[4096];
+            char *msg[6];
+            char token_storage[10][4096];
+            strcpy(temp, buf);
+            parse_msg(temp, msg, token_storage, 6);
 
-        if (strcmp(msg[2], "OPEN") != 0)
-        {
             if (strcmp(msg[2], "MOVE") == 0)
             {
-                send_fail_msg(client_socket, "24 Not Playing");
+                send_fail_msg(fd, "24 Not Playing");
+                close(fd);
+                clients[i] = clients[num_clients - 1];
+                num_clients--;
+                continue;
+            }
+            else if (strcmp(msg[2], "OPEN") == 0)
+            {
+                send_fail_msg(fd, "23 Already Open");
+                close(fd);
+                clients[i] = clients[num_clients - 1];
+                num_clients--;
+                continue;
             }
             else
             {
-                send_fail_msg(client_socket, "10 Invalid");
+                send_fail_msg(fd, "10 Invalid");
+                close(fd);
+                clients[i] = clients[num_clients - 1];
+                num_clients--;
+                continue;
             }
-
-            close(client_socket);
-            continue;
         }
-
-        if (!validate_name(clients, num_clients, client_socket, msg[3]))
-        {
-            close(client_socket);
-            continue;
-        }
-
-        client new_client;
-        new_client.socket_fd = client_socket;
-        new_client.state = WAITING;
-        new_client.game_id = -1;
-
-        strcpy(new_client.name, msg[3]);
-
-        send_wait_msg(client_socket);
-
-        clients[num_clients] = new_client;
-        num_clients++;
 
         if (num_waiting_players(clients, num_clients) >= 2)
         {
             int game_id = find_and_start_game(clients, num_clients, games, &num_games);
-
             if (game_id != -1)
             {
                 game_instance *g = &games[game_id];
-
                 pid_t pid = fork();
                 if (pid < 0)
                 {
-                    perror("fork");
-
                     send_fail_msg(g->player1_socket, "10 Invalid");
                     send_fail_msg(g->player2_socket, "10 Invalid");
-
                     close(g->player1_socket);
                     close(g->player2_socket);
                 }
                 else if (pid == 0)
                 {
                     close(listener_socket);
-
                     send_name_msg(g->player1_socket, 1, g->player2_name);
                     send_name_msg(g->player2_socket, 2, g->player1_name);
-
                     run_game(g);
-
                     exit(0);
                 }
                 else
@@ -527,7 +587,6 @@ int main(int argc, char **argv)
                         if (clients[i].game_id == g->game_id)
                         {
                             clients[i] = clients[num_clients - 1];
-
                             num_clients--;
                             i--;
                         }
