@@ -82,6 +82,7 @@ ___
 1. We interpreted double open error to occur only after server processes another player connects; not in the same client terminal (if that makes sense).
 
 ## Tests:
+__Important to Note: Sometimes even adding a buffer [sleep] to the script will cause issues, but when it doesn't, it works correctly.
 ### Logic Testing
 __Requirement:__
 This will test game flows for end to end testing.
